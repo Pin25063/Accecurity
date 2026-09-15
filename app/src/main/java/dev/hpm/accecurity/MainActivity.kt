@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomeScreenAdmin()
+                    PasesScreenAdmin()
                 }
             }
         }
@@ -186,7 +186,7 @@ fun HomeScreenAdmin() {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopBarInicioAdimYResidente() },
-        bottomBar = { BottomNavigationBarAdminYResidente() }
+        bottomBar = { BottomNavigationBarAdminYResidente(true,false,false,false) }
     ) { paddingValues ->
 
         LazyColumn(
@@ -492,13 +492,13 @@ fun PaseItem(pase: PaseData) {
 }
 
 @Composable
-fun BottomNavigationBarAdminYResidente() {
+fun BottomNavigationBarAdminYResidente(inicio: Boolean, pases: Boolean, actividad: Boolean, perfil: Boolean) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
-            selected = true,
+            selected = inicio,
             onClick = { },
             icon = { Icon(Icons.Filled.Home, contentDescription = "Inicio") },
             label = { Text("Inicio", fontSize = 10.sp) },
@@ -509,19 +509,19 @@ fun BottomNavigationBarAdminYResidente() {
             )
         )
         NavigationBarItem(
-            selected = false,
+            selected = pases,
             onClick = { },
             icon = { Icon(Icons.Outlined.ConfirmationNumber, contentDescription = "Pases") },
             label = { Text("Pases", fontSize = 10.sp) }
         )
         NavigationBarItem(
-            selected = false,
+            selected = actividad,
             onClick = { },
             icon = { Icon(Icons.Outlined.Timeline, contentDescription = "Actividad") },
             label = { Text("Actividad", fontSize = 10.sp) }
         )
         NavigationBarItem(
-            selected = false,
+            selected = perfil,
             onClick = { },
             icon = { Icon(Icons.Outlined.Person, contentDescription = "Perfil") },
             label = { Text("Perfil", fontSize = 10.sp) }
@@ -557,5 +557,62 @@ fun obtenerPasesFalsos(): List<PaseData> {
 fun HomeScreenPreview() {
     ProyectoTheme() {
     HomeScreenAdmin()
+    }
+}
+
+@Composable
+fun PasesScreenAdmin(modifier: Modifier = Modifier) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Mis pases",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Invitaciones activas y recientes",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        bottomBar = { BottomNavigationBarAdminYResidente(false,true,false,false) }
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            items(obtenerPasesFalsos()) { pase ->
+                PaseItem(pase = pase)
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
+    }
+}
+
+@Preview(
+    name = "Pantalla de Inicio Completa",
+    showBackground = true,
+    showSystemUi = true, // Muestra las barras de estado y navegación simuladas
+)
+@Composable
+fun PasesScreenPreview() {
+    ProyectoTheme() {
+        PasesScreenAdmin()
     }
 }
