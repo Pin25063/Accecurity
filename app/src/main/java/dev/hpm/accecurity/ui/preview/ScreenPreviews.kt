@@ -62,3 +62,42 @@ fun PasesScreenAdminYResidentePreview() {
         PasesScreenAdminYResidente()
     }
 }
+
+@Preview(
+    name = "ActividadAdministradorPreviwe",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun ActividadScreenAdminPreview() {
+    ProyectoTheme {
+        ActivityScreen(tipoUsuario = TipoUsuario.ADMIN)
+    }
+}
+
+@Preview(
+    name = "ActividadResidentePreview",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun ActividadScreenResidentePreview() {
+    ProyectoTheme {
+        ActivityScreen(tipoUsuario = TipoUsuario.RESIDENTE)
+    }
+}
+
+@Preview(
+    name = "ActividadJefePreview",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun ActividadScreenJefePreview() {
+    ProyectoTheme {
+        ActivityScreen(
+            tipoUsuario = TipoUsuario.JEFE,
+            numeroSolicitudesJefe = 3
+        )
+    }
+}
