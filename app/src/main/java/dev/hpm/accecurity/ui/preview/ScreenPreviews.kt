@@ -113,3 +113,17 @@ fun RegistroGaritaScreenPreview() {
         RegistroGaritaScreen()
     }
 }
+
+@Preview(
+    name = "Actualmente adentro - Jefe de seguridad",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun ActualmenteAdentroScreenPreview() {
+    ProyectoTheme {
+        ActualmenteAdentroScreen(
+            numeroSolicitudesJefe = 3
+        )
+    }
+}

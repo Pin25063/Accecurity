@@ -80,3 +80,34 @@ fun TopBarPerfil() {
         )
     }
 }
+
+/**
+ * Barra superior de la pantalla de visitantes dentro de las instalaciones.
+ */
+@Composable
+fun TopBarActualmenteAdentro() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = 8.dp
+            )
+    ) {
+        Text(
+            text = "Actualmente adentro",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Text(
+            text = "Ahora en tiempo real",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
