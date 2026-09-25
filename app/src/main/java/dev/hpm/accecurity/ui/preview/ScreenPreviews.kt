@@ -101,3 +101,15 @@ fun ActividadScreenJefePreview() {
         )
     }
 }
+
+@Preview(
+    name = "Registro de garita",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun RegistroGaritaScreenPreview() {
+    ProyectoTheme {
+        RegistroGaritaScreen()
+    }
+}
