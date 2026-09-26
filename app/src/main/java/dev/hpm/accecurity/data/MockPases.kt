@@ -7,8 +7,8 @@ import dev.hpm.accecurity.ui.theme.StatusInside
 import dev.hpm.accecurity.ui.theme.StatusInsideContainer
 
 /**
- * Datos temporales de pases para desarrollo y previews.
- * Reemplazar por fuente real (API o base de datos) cuando esté disponible.
+ * Datos QUEMADOS de pases para desarrollo y previews.
+ *
  */
 fun obtenerPasesFalsos(): List<PaseData> = listOf(
     PaseData(
@@ -40,7 +40,7 @@ fun obtenerPasesFalsos(): List<PaseData> = listOf(
     ),
     PaseData(
         iniciales = "AB",
-        nombre = "Ana Beltrán",
+        nombre = "Valeria FDernandez",
         descripcion = "Reunión de padres ·...",
         estado = "Esperado",
         hora = "12:30",
