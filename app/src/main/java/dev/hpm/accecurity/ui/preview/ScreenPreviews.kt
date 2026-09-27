@@ -26,7 +26,11 @@ fun FormularioLogInPreview() {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(
+    name = "Perfil - Jefe de seguridad",
+    showBackground = true,
+    showSystemUi = true
+)
 @Composable
 fun PerfilScreenJefePreview() {
     ProyectoTheme {
@@ -35,6 +39,54 @@ fun PerfilScreenJefePreview() {
             iniciales = "EV",
             tipoUsuario = TipoUsuario.JEFE,
             numeroSolicitudesJefe = 5
+        )
+    }
+}
+
+@Preview(
+    name = "Perfil - Administrador",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun PerfilScreenAdminPreview() {
+    ProyectoTheme {
+        PerfilScreen(
+            nombre = "Carlos Mendoza",
+            iniciales = "CM",
+            tipoUsuario = TipoUsuario.ADMIN
+        )
+    }
+}
+
+@Preview(
+    name = "Perfil - Residente",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun PerfilScreenResidentePreview() {
+    ProyectoTheme {
+        PerfilScreen(
+            nombre = "Ana Morales",
+            iniciales = "AM",
+            tipoUsuario = TipoUsuario.RESIDENTE
+        )
+    }
+}
+
+@Preview(
+    name = "Perfil - Guardia",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun PerfilScreenGuardiaPreview() {
+    ProyectoTheme {
+        PerfilScreen(
+            nombre = "Roberto Gómez",
+            iniciales = "RG",
+            tipoUsuario = TipoUsuario.GUARDIA
         )
     }
 }
@@ -64,7 +116,7 @@ fun PasesScreenAdminYResidentePreview() {
 }
 
 @Preview(
-    name = "ActividadAdministradorPreviwe",
+    name = "ActividadAdministradorPreview",
     showBackground = true,
     showSystemUi = true
 )
@@ -125,5 +177,29 @@ fun ActualmenteAdentroScreenPreview() {
         ActualmenteAdentroScreen(
             numeroSolicitudesJefe = 3
         )
+    }
+}
+
+@Preview(
+    name = "Escáner de garita - Guardia",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun EscanerScreenGuardiaPreview() {
+    ProyectoTheme {
+        EscanerScreenGuardia()
+    }
+}
+
+@Preview(
+    name = "Solicitudes de acceso - Jefe",
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun SolicitudesScreenJefePreview() {
+    ProyectoTheme {
+        SolicitudesScreenJefe()
     }
 }

@@ -1,6 +1,7 @@
 package dev.hpm.accecurity.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -127,17 +128,5 @@ fun EscanerScreenGuardia(modifier: Modifier = Modifier) {
                 }
             }
         }
-    }
-}
-
-@Preview(
-    name = "Escáner de garita - Guardia",
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-fun EscanerScreenGuardiaPreview() {
-    ProyectoTheme {
-        EscanerScreenGuardia()
     }
 }

@@ -88,15 +88,3 @@ fun SolicitudesScreenJefe(modifier: Modifier = Modifier) {
         }
     }
 }
-
-@Preview(
-    name = "Solicitudes de acceso - Jefe",
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-fun SolicitudesScreenJefePreview() {
-    ProyectoTheme {
-        SolicitudesScreenJefe()
-    }
-}
