@@ -19,7 +19,11 @@ import dev.hpm.accecurity.ui.components.topbar.TopBarActualmenteAdentro
  */
 @Composable
 fun ActualmenteAdentroScreen(
-    numeroSolicitudesJefe: Int = 0
+    numeroSolicitudesJefe: Int = 0,
+    onSolicitudesClick: () -> Unit = {},
+    onAdentroClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -30,7 +34,11 @@ fun ActualmenteAdentroScreen(
                 adentro = true,
                 actividad = false,
                 perfil = false,
-                numeroSolicitudes = numeroSolicitudesJefe
+                numeroSolicitudes = numeroSolicitudesJefe,
+                onSolicitudesClick = onSolicitudesClick,
+                onAdentroClick = onAdentroClick,
+                onActividadClick = onActividadClick,
+                onPerfilClick = onPerfilClick
             )
         }
     ) { paddingValues ->

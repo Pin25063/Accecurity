@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun FormularioLogIn(
     modifier: Modifier = Modifier,
-    onLoginSuccess: () -> Unit = {}
+    onLoginSuccess: (String) -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -103,7 +103,9 @@ fun FormularioLogIn(
         Button(
             onClick = {
                 if (email == "admin") {
-                    onLoginSuccess()
+                    onLoginSuccess("admin")
+                } else if (email == "jefe") {
+                    onLoginSuccess("jefe")
                 }
             },
             modifier = Modifier

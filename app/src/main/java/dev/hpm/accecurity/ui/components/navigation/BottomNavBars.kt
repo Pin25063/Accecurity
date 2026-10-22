@@ -136,6 +136,10 @@ fun BottomNavigationBarGuardia(
  * Barra de navegación inferior para el rol jefe de seguridad.
  *
  * @param numeroSolicitudes Cantidad de solicitudes pendientes mostrada en el badge.
+ * @param onSolicitudesClick Callback al seleccionar la pestaña Solicitudes.
+ * @param onAdentroClick Callback al seleccionar la pestaña Adentro.
+ * @param onActividadClick Callback al seleccionar la pestaña Actividad.
+ * @param onPerfilClick Callback al seleccionar la pestaña Perfil.
  */
 @Composable
 fun BottomNavigationBarJefe(
@@ -143,7 +147,11 @@ fun BottomNavigationBarJefe(
     adentro: Boolean,
     actividad: Boolean,
     perfil: Boolean,
-    numeroSolicitudes: Int
+    numeroSolicitudes: Int = 0,
+    onSolicitudesClick: () -> Unit = {},
+    onAdentroClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -151,7 +159,7 @@ fun BottomNavigationBarJefe(
     ) {
         NavigationBarItem(
             selected = solicitudes,
-            onClick = { },
+            onClick = onSolicitudesClick,
             icon = {
                 BadgedBox(
                     badge = {
@@ -180,7 +188,7 @@ fun BottomNavigationBarJefe(
         )
         NavigationBarItem(
             selected = adentro,
-            onClick = { },
+            onClick = onAdentroClick,
             icon = {
                 Icon(
                     if (adentro) Icons.Filled.MeetingRoom else Icons.Outlined.MeetingRoom,
@@ -196,7 +204,7 @@ fun BottomNavigationBarJefe(
         )
         NavigationBarItem(
             selected = actividad,
-            onClick = { },
+            onClick = onActividadClick,
             icon = {
                 Icon(
                     if (actividad) Icons.Filled.Timeline else Icons.Outlined.Timeline,
@@ -212,7 +220,7 @@ fun BottomNavigationBarJefe(
         )
         NavigationBarItem(
             selected = perfil,
-            onClick = { },
+            onClick = onPerfilClick,
             icon = {
                 Icon(
                     if (perfil) Icons.Filled.Person else Icons.Outlined.Person,

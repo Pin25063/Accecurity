@@ -8,11 +8,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import dev.hpm.accecurity.model.TipoUsuario
+import dev.hpm.accecurity.ui.screens.ActualmenteAdentroScreen
 import dev.hpm.accecurity.ui.screens.ActivityScreen
 import dev.hpm.accecurity.ui.screens.FormularioLogIn
 import dev.hpm.accecurity.ui.screens.HomeScreenAdmin
 import dev.hpm.accecurity.ui.screens.PasesScreenAdminYResidente
 import dev.hpm.accecurity.ui.screens.PerfilScreen
+import dev.hpm.accecurity.ui.screens.SolicitudesScreenJefe
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -33,6 +35,21 @@ object AdminActividadDestination
 @Serializable
 object AdminPerfilDestination
 
+@Serializable
+object JefeGraph
+
+@Serializable
+object JefeSolicitudesDestination
+
+@Serializable
+object JefeAdentroDestination
+
+@Serializable
+object JefeActividadDestination
+
+@Serializable
+object JefePerfilDestination
+
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
@@ -44,11 +61,10 @@ fun AppNavHost(modifier: Modifier = Modifier) {
     ) {
         composable<LoginDestination> {
             FormularioLogIn(
-                onLoginSuccess = {
-                    navController.navigate(AdminGraph) {
-                        popUpTo<LoginDestination> {
-                            inclusive = true
-                        }
+                onLoginSuccess = { role ->
+                    val destination: Any = if (role == "jefe") JefeGraph else AdminGraph
+                    navController.navigate(destination) {
+                        popUpTo<LoginDestination> { inclusive = true }
                     }
                 }
             )
@@ -211,6 +227,181 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                     },
                     onPerfilClick = {
                         navController.navigate(AdminPerfilDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onLogOutClick = {
+                        navController.navigate(LoginDestination) {
+                            popUpTo(0) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+        }
+
+        navigation<JefeGraph>(startDestination = JefeSolicitudesDestination) {
+            composable<JefeSolicitudesDestination> {
+                SolicitudesScreenJefe(
+                    onSolicitudesClick = {
+                        navController.navigate(JefeSolicitudesDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onAdentroClick = {
+                        navController.navigate(JefeAdentroDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onActividadClick = {
+                        navController.navigate(JefeActividadDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onPerfilClick = {
+                        navController.navigate(JefePerfilDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+
+            composable<JefeAdentroDestination> {
+                ActualmenteAdentroScreen(
+                    onSolicitudesClick = {
+                        navController.navigate(JefeSolicitudesDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onAdentroClick = {
+                        navController.navigate(JefeAdentroDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onActividadClick = {
+                        navController.navigate(JefeActividadDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onPerfilClick = {
+                        navController.navigate(JefePerfilDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+
+            composable<JefeActividadDestination> {
+                ActivityScreen(
+                    tipoUsuario = TipoUsuario.JEFE,
+                    onSolicitudesClick = {
+                        navController.navigate(JefeSolicitudesDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onAdentroClick = {
+                        navController.navigate(JefeAdentroDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onActividadClick = {
+                        navController.navigate(JefeActividadDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onPerfilClick = {
+                        navController.navigate(JefePerfilDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+
+            composable<JefePerfilDestination> {
+                PerfilScreen(
+                    tipoUsuario = TipoUsuario.JEFE,
+                    onSolicitudesClick = {
+                        navController.navigate(JefeSolicitudesDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onAdentroClick = {
+                        navController.navigate(JefeAdentroDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onActividadClick = {
+                        navController.navigate(JefeActividadDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onPerfilClick = {
+                        navController.navigate(JefePerfilDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }

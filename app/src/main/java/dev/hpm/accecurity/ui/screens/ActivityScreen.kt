@@ -36,7 +36,9 @@ fun ActivityScreen(
     onInicioClick: () -> Unit = {},
     onPasesClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
-    onPerfilClick: () -> Unit = {}
+    onPerfilClick: () -> Unit = {},
+    onSolicitudesClick: () -> Unit = onInicioClick,
+    onAdentroClick: () -> Unit = onPasesClick
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -87,7 +89,11 @@ fun ActivityScreen(
                         adentro = false,
                         actividad = true,
                         perfil = false,
-                        numeroSolicitudes = numeroSolicitudesJefe
+                        numeroSolicitudes = numeroSolicitudesJefe,
+                        onSolicitudesClick = onSolicitudesClick,
+                        onAdentroClick = onAdentroClick,
+                        onActividadClick = onActividadClick,
+                        onPerfilClick = onPerfilClick
                     )
                 }
 

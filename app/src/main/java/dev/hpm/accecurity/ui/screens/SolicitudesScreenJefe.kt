@@ -23,7 +23,13 @@ import dev.hpm.accecurity.ui.theme.ProyectoTheme
  * Muestra solicitudes pendientes con opciones de aprobar o rechazar.
  */
 @Composable
-fun SolicitudesScreenJefe(modifier: Modifier = Modifier) {
+fun SolicitudesScreenJefe(
+    modifier: Modifier = Modifier,
+    onSolicitudesClick: () -> Unit = {},
+    onAdentroClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
+) {
     val solicitudes = obtenerSolicitudesFalsas()
     val pendientes = contarSolicitudesPendientes()
 
@@ -54,7 +60,11 @@ fun SolicitudesScreenJefe(modifier: Modifier = Modifier) {
                 adentro = false,
                 actividad = false,
                 perfil = false,
-                numeroSolicitudes = pendientes
+                numeroSolicitudes = pendientes,
+                onSolicitudesClick = onSolicitudesClick,
+                onAdentroClick = onAdentroClick,
+                onActividadClick = onActividadClick,
+                onPerfilClick = onPerfilClick
             )
         }
     ) { paddingValues ->

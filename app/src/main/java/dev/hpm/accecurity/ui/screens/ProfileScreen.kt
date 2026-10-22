@@ -36,7 +36,9 @@ fun PerfilScreen(
     onPasesClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
     onPerfilClick: () -> Unit = {},
-    onLogOutClick: () -> Unit = {}
+    onLogOutClick: () -> Unit = {},
+    onSolicitudesClick: () -> Unit = onInicioClick,
+    onAdentroClick: () -> Unit = onPasesClick
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -68,7 +70,11 @@ fun PerfilScreen(
                         adentro = false,
                         actividad = false,
                         perfil = true,
-                        numeroSolicitudes = numeroSolicitudesJefe
+                        numeroSolicitudes = numeroSolicitudesJefe,
+                        onSolicitudesClick = onSolicitudesClick,
+                        onAdentroClick = onAdentroClick,
+                        onActividadClick = onActividadClick,
+                        onPerfilClick = onPerfilClick
                     )
                 }
             }
