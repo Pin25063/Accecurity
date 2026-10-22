@@ -20,23 +20,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.hpm.accecurity.core.auth.AuthenticatedSession
+import dev.hpm.accecurity.core.auth.displayName
 
 /**
  * Pantalla de inicio de sesión con Firebase Auth y patrón MVI.
  */
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (String) -> Unit,
+    onLoginSuccess: (AuthenticatedSession) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.loggedInRole) {
-        state.loggedInRole?.let { role ->
-            onLoginSuccess(role)
-            viewModel.onEvent(LoginEvent.NavigationHandled)
-        }
+    LaunchedEffect(state.session) {
+        state.session?.let(onLoginSuccess)
     }
 
     Column(
@@ -121,6 +120,17 @@ fun LoginScreen(
             )
         }
 
+        state.session?.let { session ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Sesión iniciada como ${session.tipoUsuario.displayName()}",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
@@ -157,7 +167,7 @@ fun LoginScreen(
 /** Alias usado por navegación y previews existentes. */
 @Composable
 fun FormularioLogIn(
-    onLoginSuccess: (String) -> Unit = {},
+    onLoginSuccess: (AuthenticatedSession) -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = viewModel()
 ) {

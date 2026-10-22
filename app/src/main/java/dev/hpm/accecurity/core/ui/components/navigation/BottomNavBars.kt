@@ -75,7 +75,10 @@ fun BottomNavigationBarAdminYResidente(
 fun BottomNavigationBarGuardia(
     escaner: Boolean,
     registro: Boolean,
-    perfil: Boolean
+    perfil: Boolean,
+    onEscanerClick: () -> Unit = {},
+    onRegistroClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -83,7 +86,7 @@ fun BottomNavigationBarGuardia(
     ) {
         NavigationBarItem(
             selected = escaner,
-            onClick = { },
+            onClick = onEscanerClick,
             icon = {
                 Icon(
                     if (escaner) Icons.Filled.QrCodeScanner else Icons.Outlined.QrCodeScanner,
@@ -99,7 +102,7 @@ fun BottomNavigationBarGuardia(
         )
         NavigationBarItem(
             selected = registro,
-            onClick = { },
+            onClick = onRegistroClick,
             icon = {
                 Icon(
                     if (registro) Icons.Filled.FactCheck else Icons.Outlined.FactCheck,
@@ -115,7 +118,7 @@ fun BottomNavigationBarGuardia(
         )
         NavigationBarItem(
             selected = perfil,
-            onClick = { },
+            onClick = onPerfilClick,
             icon = {
                 Icon(
                     if (perfil) Icons.Filled.Person else Icons.Outlined.Person,

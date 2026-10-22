@@ -2,20 +2,20 @@ package dev.hpm.accecurity.feature.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import dev.hpm.accecurity.core.auth.resolveLoginRole
+import dev.hpm.accecurity.core.auth.AuthRepository
+import dev.hpm.accecurity.core.auth.SignInResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 /**
- * ViewModel de login con Firebase Authentication (correo y contraseña).
+ * ViewModel de login. Expone la sesión autenticada para que la navegación
+ * la consuma después, sin decidir destinos aquí.
  */
 class LoginViewModel(
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginState())
@@ -30,9 +30,6 @@ class LoginViewModel(
                 _uiState.update { it.copy(password = event.value, errorMessage = null) }
             }
             LoginEvent.SignInClicked -> signIn()
-            LoginEvent.NavigationHandled -> {
-                _uiState.update { it.copy(loggedInRole = null) }
-            }
         }
     }
 
@@ -46,34 +43,19 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                auth.signInWithEmailAndPassword(email, password).await()
-                val role = resolveLoginRole(email)
-                _uiState.update {
-                    it.copy(isLoading = false, loggedInRole = role)
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, session = null) }
+            when (val result = authRepository.signIn(email, password)) {
+                is SignInResult.Success -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, session = result.session)
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = mapAuthError(e)
-                    )
+                is SignInResult.Failure -> {
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = result.message)
+                    }
                 }
             }
-        }
-    }
-
-    private fun mapAuthError(error: Exception): String {
-        val message = error.message.orEmpty().lowercase()
-        return when {
-            "password" in message || "invalid" in message ->
-                "Correo o contraseña incorrectos."
-            "network" in message ->
-                "Sin conexión. Revisa tu internet."
-            "user-not-found" in message ->
-                "No existe una cuenta con ese correo."
-            else -> "No se pudo iniciar sesión. Intenta de nuevo."
         }
     }
 }
