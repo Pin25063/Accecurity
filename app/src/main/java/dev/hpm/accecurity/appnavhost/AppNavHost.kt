@@ -2,7 +2,9 @@ package dev.hpm.accecurity.appnavhost
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.google.firebase.auth.FirebaseAuth
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -49,6 +51,13 @@ object JefeActividadDestination
 
 @Serializable
 object JefePerfilDestination
+
+private fun NavHostController.navigateToLoginAfterSignOut() {
+    FirebaseAuth.getInstance().signOut()
+    navigate(LoginDestination) {
+        popUpTo(0) { inclusive = true }
+    }
+}
 
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
@@ -234,13 +243,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                             restoreState = true
                         }
                     },
-                    onLogOutClick = {
-                        navController.navigate(LoginDestination) {
-                            popUpTo(0) {
-                                inclusive = true
-                            }
-                        }
-                    }
+                    onLogOutClick = { navController.navigateToLoginAfterSignOut() }
                 )
             }
         }
@@ -409,13 +412,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                             restoreState = true
                         }
                     },
-                    onLogOutClick = {
-                        navController.navigate(LoginDestination) {
-                            popUpTo(0) {
-                                inclusive = true
-                            }
-                        }
-                    }
+                    onLogOutClick = { navController.navigateToLoginAfterSignOut() }
                 )
             }
         }

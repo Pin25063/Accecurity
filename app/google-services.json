@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "868862720632",
+    "project_id": "accecurity",
+    "storage_bucket": "accecurity.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:868862720632:android:17ed6531e47dd404020b8d",
+        "android_client_info": {
+          "package_name": "dev.hpm.accecurity"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBDHkY0Riwzn8uTC4IqvKlrinXZpQJsno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
