@@ -23,11 +23,27 @@ import dev.hpm.accecurity.ui.theme.StatusInsideContainer
  * Pantalla principal del administrador con estadísticas, filtros y listado de pases.
  */
 @Composable
-fun HomeScreenAdmin() {
+fun HomeScreenAdmin(
+    onInicioClick: () -> Unit = {},
+    onPasesClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopBarInicioAdminYResidente() },
-        bottomBar = { BottomNavigationBarAdminYResidente(inicio = true, pases = false, actividad = false, perfil = false) }
+        bottomBar = {
+            BottomNavigationBarAdminYResidente(
+                inicio = true,
+                pases = false,
+                actividad = false,
+                perfil = false,
+                onInicioClick = onInicioClick,
+                onPasesClick = onPasesClick,
+                onActividadClick = onActividadClick,
+                onPerfilClick = onPerfilClick
+            )
+        }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

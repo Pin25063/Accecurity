@@ -18,7 +18,13 @@ import dev.hpm.accecurity.ui.components.pass.PaseItem
  * Pantalla de listado de pases del usuario (admin y residente).
  */
 @Composable
-fun PasesScreenAdminYResidente(modifier: Modifier = Modifier) {
+fun PasesScreenAdminYResidente(
+    modifier: Modifier = Modifier,
+    onInicioClick: () -> Unit = {},
+    onPasesClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -44,7 +50,18 @@ fun PasesScreenAdminYResidente(modifier: Modifier = Modifier) {
                 }
             }
         },
-        bottomBar = { BottomNavigationBarAdminYResidente(inicio = false, pases = true, actividad = false, perfil = false) }
+        bottomBar = {
+            BottomNavigationBarAdminYResidente(
+                inicio = false,
+                pases = true,
+                actividad = false,
+                perfil = false,
+                onInicioClick = onInicioClick,
+                onPasesClick = onPasesClick,
+                onActividadClick = onActividadClick,
+                onPerfilClick = onPerfilClick
+            )
+        }
     ) { paddingValues ->
         LazyColumn(
             modifier = modifier

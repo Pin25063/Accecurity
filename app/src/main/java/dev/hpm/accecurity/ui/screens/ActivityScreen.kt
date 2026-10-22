@@ -24,11 +24,19 @@ import dev.hpm.accecurity.ui.components.navigation.BottomNavigationBarJefe
  *
  * @param tipoUsuario Rol que determina la navegación inferior.
  * @param numeroSolicitudesJefe Badge de solicitudes pendientes (solo jefe).
+ * @param onInicioClick Callback al presionar la pestaña Inicio.
+ * @param onPasesClick Callback al presionar la pestaña Pases.
+ * @param onActividadClick Callback al presionar la pestaña Actividad.
+ * @param onPerfilClick Callback al presionar la pestaña Perfil.
  */
 @Composable
 fun ActivityScreen(
     tipoUsuario: TipoUsuario,
-    numeroSolicitudesJefe: Int = 0
+    numeroSolicitudesJefe: Int = 0,
+    onInicioClick: () -> Unit = {},
+    onPasesClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -65,7 +73,11 @@ fun ActivityScreen(
                         inicio = false,
                         pases = false,
                         actividad = true,
-                        perfil = false
+                        perfil = false,
+                        onInicioClick = onInicioClick,
+                        onPasesClick = onPasesClick,
+                        onActividadClick = onActividadClick,
+                        onPerfilClick = onPerfilClick
                     )
                 }
 

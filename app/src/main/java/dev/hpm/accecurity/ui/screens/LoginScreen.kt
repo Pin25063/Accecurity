@@ -21,7 +21,10 @@ import androidx.compose.ui.unit.sp
  * Pantalla de inicio de sesión con campos de email y contraseña.
  */
 @Composable
-fun FormularioLogIn(modifier: Modifier = Modifier) {
+fun FormularioLogIn(
+    modifier: Modifier = Modifier,
+    onLoginSuccess: () -> Unit = {}
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -98,7 +101,11 @@ fun FormularioLogIn(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = { },
+            onClick = {
+                if (email == "admin") {
+                    onLoginSuccess()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),

@@ -16,13 +16,21 @@ import androidx.compose.ui.unit.sp
  * @param pases Indica si la pestaña Pases está seleccionada.
  * @param actividad Indica si la pestaña Actividad está seleccionada.
  * @param perfil Indica si la pestaña Perfil está seleccionada.
+ * @param onInicioClick Callback al seleccionar la pestaña Inicio.
+ * @param onPasesClick Callback al seleccionar la pestaña Pases.
+ * @param onActividadClick Callback al seleccionar la pestaña Actividad.
+ * @param onPerfilClick Callback al seleccionar la pestaña Perfil.
  */
 @Composable
 fun BottomNavigationBarAdminYResidente(
     inicio: Boolean,
     pases: Boolean,
     actividad: Boolean,
-    perfil: Boolean
+    perfil: Boolean,
+    onInicioClick: () -> Unit = {},
+    onPasesClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -30,7 +38,7 @@ fun BottomNavigationBarAdminYResidente(
     ) {
         NavigationBarItem(
             selected = inicio,
-            onClick = { },
+            onClick = onInicioClick,
             icon = { Icon(Icons.Filled.Home, contentDescription = "Inicio") },
             label = { Text("Inicio", fontSize = 10.sp) },
             colors = NavigationBarItemDefaults.colors(
@@ -41,19 +49,19 @@ fun BottomNavigationBarAdminYResidente(
         )
         NavigationBarItem(
             selected = pases,
-            onClick = { },
+            onClick = onPasesClick,
             icon = { Icon(Icons.Outlined.ConfirmationNumber, contentDescription = "Pases") },
             label = { Text("Pases", fontSize = 10.sp) }
         )
         NavigationBarItem(
             selected = actividad,
-            onClick = { },
+            onClick = onActividadClick,
             icon = { Icon(Icons.Outlined.Timeline, contentDescription = "Actividad") },
             label = { Text("Actividad", fontSize = 10.sp) }
         )
         NavigationBarItem(
             selected = perfil,
-            onClick = { },
+            onClick = onPerfilClick,
             icon = { Icon(Icons.Outlined.Person, contentDescription = "Perfil") },
             label = { Text("Perfil", fontSize = 10.sp) }
         )

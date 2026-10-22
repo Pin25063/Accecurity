@@ -20,13 +20,23 @@ import dev.hpm.accecurity.ui.components.topbar.TopBarPerfil
  * @param iniciales Iniciales para el avatar.
  * @param tipoUsuario Rol que determina la navegación inferior.
  * @param numeroSolicitudesJefe Badge de solicitudes pendientes (solo jefe).
+ * @param onInicioClick Callback al presionar la pestaña Inicio.
+ * @param onPasesClick Callback al presionar la pestaña Pases.
+ * @param onActividadClick Callback al presionar la pestaña Actividad.
+ * @param onPerfilClick Callback al presionar la pestaña Perfil.
+ * @param onLogOutClick Callback al presionar el botón de cerrar sesión.
  */
 @Composable
 fun PerfilScreen(
-    nombre: String,
-    iniciales: String,
+    nombre: String = "Carlos Mendoza",
+    iniciales: String = "CM",
     tipoUsuario: TipoUsuario,
-    numeroSolicitudesJefe: Int = 0
+    numeroSolicitudesJefe: Int = 0,
+    onInicioClick: () -> Unit = {},
+    onPasesClick: () -> Unit = {},
+    onActividadClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {},
+    onLogOutClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -38,7 +48,11 @@ fun PerfilScreen(
                         inicio = false,
                         pases = false,
                         actividad = false,
-                        perfil = true
+                        perfil = true,
+                        onInicioClick = onInicioClick,
+                        onPasesClick = onPasesClick,
+                        onActividadClick = onActividadClick,
+                        onPerfilClick = onPerfilClick
                     )
                 }
                 TipoUsuario.GUARDIA -> {
@@ -77,7 +91,7 @@ fun PerfilScreen(
 
             MenuPerfil()
 
-            BotonCerrarSesion(onClick = { })
+            BotonCerrarSesion(onClick = onLogOutClick)
 
             Spacer(modifier = Modifier.height(16.dp))
         }
