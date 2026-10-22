@@ -1,6 +1,7 @@
 package dev.hpm.accecurity.core.auth
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import dev.hpm.accecurity.core.model.TipoUsuario
 import kotlinx.coroutines.tasks.await
 
@@ -36,8 +37,14 @@ class UserRoleRepository(
             } else {
                 AssignedRoleResult.Success(tipoUsuario)
             }
-        } catch (_: Exception) {
-            AssignedRoleResult.NetworkOrServerError
+        } catch (error: Exception) {
+            val code = (error as? FirebaseFirestoreException)?.code
+                ?: (error.cause as? FirebaseFirestoreException)?.code
+            if (code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                AssignedRoleResult.PermissionDenied
+            } else {
+                AssignedRoleResult.NetworkOrServerError
+            }
         }
     }
 
@@ -51,5 +58,6 @@ sealed interface AssignedRoleResult {
     data class Success(val tipoUsuario: TipoUsuario) : AssignedRoleResult
     data object MissingDocument : AssignedRoleResult
     data object InvalidRole : AssignedRoleResult
+    data object PermissionDenied : AssignedRoleResult
     data object NetworkOrServerError : AssignedRoleResult
 }

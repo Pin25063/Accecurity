@@ -43,6 +43,12 @@ class AuthRepository(
                         "Rol inválido en Firestore. Usa: admin, residente, jefe o guardia."
                     )
                 }
+                AssignedRoleResult.PermissionDenied -> {
+                    auth.signOut()
+                    SignInResult.Failure(
+                        "Firestore bloqueó la lectura del rol. En Reglas, permite leer el documento del usuario autenticado."
+                    )
+                }
                 AssignedRoleResult.NetworkOrServerError -> {
                     auth.signOut()
                     SignInResult.Failure("No se pudo leer tu rol. Revisa internet o Firestore.")
