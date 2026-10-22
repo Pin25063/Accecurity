@@ -7,14 +7,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import dev.hpm.accecurity.model.TipoUsuario
-import dev.hpm.accecurity.ui.screens.ActualmenteAdentroScreen
-import dev.hpm.accecurity.ui.screens.ActivityScreen
-import dev.hpm.accecurity.ui.screens.FormularioLogIn
-import dev.hpm.accecurity.ui.screens.HomeScreenAdmin
-import dev.hpm.accecurity.ui.screens.PasesScreenAdminYResidente
-import dev.hpm.accecurity.ui.screens.PerfilScreen
-import dev.hpm.accecurity.ui.screens.SolicitudesScreenJefe
+import dev.hpm.accecurity.core.model.TipoUsuario
+import dev.hpm.accecurity.feature.activity.ActivityScreen
+import dev.hpm.accecurity.feature.inside.ActualmenteAdentroScreen
+import dev.hpm.accecurity.feature.login.FormularioLogIn
+import dev.hpm.accecurity.feature.pases.HomeScreenAdmin
+import dev.hpm.accecurity.feature.pases.PasesScreenAdminYResidente
+import dev.hpm.accecurity.feature.profile.PerfilScreen
+import dev.hpm.accecurity.feature.solicitudes.SolicitudesScreenJefe
 import kotlinx.serialization.Serializable
 
 @Serializable
