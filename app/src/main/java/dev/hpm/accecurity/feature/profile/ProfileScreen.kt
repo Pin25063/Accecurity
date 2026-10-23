@@ -25,6 +25,10 @@ import dev.hpm.accecurity.core.ui.components.topbar.TopBarPerfil
  * @param onActividadClick Callback al presionar la pestaña Actividad.
  * @param onPerfilClick Callback al presionar la pestaña Perfil.
  * @param onLogOutClick Callback al presionar el botón de cerrar sesión.
+ * @param onSolicitudesClick Callback al presionar la pestaña Solicitudes (solo jefe).
+ * @param onAdentroClick Callback al presionar la pestaña Adentro (solo jefe).
+ * @param onEscanerClick Callback al presionar la pestaña Escáner (solo guardia).
+ * @param onRegistroClick Callback al presionar la pestaña Registro (solo guardia).
  */
 @Composable
 fun PerfilScreen(
@@ -38,7 +42,9 @@ fun PerfilScreen(
     onPerfilClick: () -> Unit = {},
     onLogOutClick: () -> Unit = {},
     onSolicitudesClick: () -> Unit = onInicioClick,
-    onAdentroClick: () -> Unit = onPasesClick
+    onAdentroClick: () -> Unit = onPasesClick,
+    onEscanerClick: () -> Unit = {},
+    onRegistroClick: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -61,7 +67,10 @@ fun PerfilScreen(
                     BottomNavigationBarGuardia(
                         escaner = false,
                         registro = false,
-                        perfil = true
+                        perfil = true,
+                        onEscanerClick = onEscanerClick,
+                        onRegistroClick = onRegistroClick,
+                        onPerfilClick = onPerfilClick
                     )
                 }
                 TipoUsuario.JEFE -> {

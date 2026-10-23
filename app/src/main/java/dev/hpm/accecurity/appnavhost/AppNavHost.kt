@@ -83,7 +83,27 @@ fun AppNavHost(modifier: Modifier = Modifier) {
         modifier = modifier
     ) {
         composable<LoginDestination> {
-            FormularioLogIn()
+            FormularioLogIn(
+                onLoginSuccess = { session ->
+                    when (session.tipoUsuario) {
+                        TipoUsuario.ADMIN, TipoUsuario.RESIDENTE -> {
+                            navController.navigate(AdminGraph) {
+                                popUpTo<LoginDestination> { inclusive = true }
+                            }
+                        }
+                        TipoUsuario.JEFE -> {
+                            navController.navigate(JefeGraph) {
+                                popUpTo<LoginDestination> { inclusive = true }
+                            }
+                        }
+                        TipoUsuario.GUARDIA -> {
+                            navController.navigate(GuardiaGraph) {
+                                popUpTo<LoginDestination> { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            )
         }
 
         navigation<AdminGraph>(startDestination = AdminInicioDestination) {
@@ -490,6 +510,33 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             composable<GuardiaPerfilDestination> {
                 PerfilScreen(
                     tipoUsuario = TipoUsuario.GUARDIA,
+                    onEscanerClick = {
+                        navController.navigate(GuardiaEscanerDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onRegistroClick = {
+                        navController.navigate(GuardiaRegistroDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onPerfilClick = {
+                        navController.navigate(GuardiaPerfilDestination) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onLogOutClick = { navController.navigateToLoginAfterSignOut() }
                 )
             }

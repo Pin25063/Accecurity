@@ -7,9 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.outlined.ConfirmationNumber
-import androidx.compose.material.icons.outlined.ExitToApp
-import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
@@ -30,7 +29,12 @@ import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarGuard
  * Solo interfaz visual; la funcionalidad de cámara se implementará después.
  */
 @Composable
-fun EscanerScreenGuardia(modifier: Modifier = Modifier) {
+fun EscanerScreenGuardia(
+    modifier: Modifier = Modifier,
+    onEscanerClick: () -> Unit = {},
+    onRegistroClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -61,7 +65,10 @@ fun EscanerScreenGuardia(modifier: Modifier = Modifier) {
             BottomNavigationBarGuardia(
                 escaner = true,
                 registro = false,
-                perfil = false
+                perfil = false,
+                onEscanerClick = onEscanerClick,
+                onRegistroClick = onRegistroClick,
+                onPerfilClick = onPerfilClick
             )
         }
     ) { paddingValues ->
@@ -120,7 +127,7 @@ fun EscanerScreenGuardia(modifier: Modifier = Modifier) {
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.ExitToApp,
+                        imageVector = Icons.AutoMirrored.Outlined.ExitToApp,
                         contentDescription = "Registrar salida",
                         modifier = Modifier.size(22.dp)
                     )
@@ -140,8 +147,14 @@ fun EscanerScreenGuardia(modifier: Modifier = Modifier) {
  * Pantalla de registro de garita con el listado de eventos de acceso.
  */
 @Composable
-fun RegistroGaritaScreen() {
+fun RegistroGaritaScreen(
+    modifier: Modifier = Modifier,
+    onEscanerClick: () -> Unit = {},
+    onRegistroClick: () -> Unit = {},
+    onPerfilClick: () -> Unit = {}
+) {
     Scaffold(
+        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(
@@ -173,7 +186,10 @@ fun RegistroGaritaScreen() {
             BottomNavigationBarGuardia(
                 escaner = false,
                 registro = true,
-                perfil = false
+                perfil = false,
+                onEscanerClick = onEscanerClick,
+                onRegistroClick = onRegistroClick,
+                onPerfilClick = onPerfilClick
             )
         }
     ) { paddingValues ->
@@ -191,7 +207,7 @@ fun RegistroGaritaScreen() {
                     titulo = "Laura Méndez ingresó",
                     descripcion = "Visita principal · QR verificado",
                     hora = "09:12",
-                    icono = Icons.Outlined.Login,
+                    icono = Icons.AutoMirrored.Outlined.Login,
                     colorIcono = Color(0xFF287D3C),
                     colorFondo = Color(0xFFDDF3E2)
                 )
