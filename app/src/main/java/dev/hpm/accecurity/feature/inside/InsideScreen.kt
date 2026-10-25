@@ -5,8 +5,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hpm.accecurity.core.ui.components.inside.PersonaAdentroItem
 import dev.hpm.accecurity.core.ui.components.inside.ResumenPersonasAdentro
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarJefe
@@ -18,13 +21,17 @@ import dev.hpm.accecurity.core.ui.components.topbar.TopBarActualmenteAdentro
  * @param numeroSolicitudesJefe Badge de solicitudes pendientes.
  */
 @Composable
-fun ActualmenteAdentroScreen(
+fun InsideScreen(
+    modifier: Modifier = Modifier,
     numeroSolicitudesJefe: Int = 0,
     onSolicitudesClick: () -> Unit = {},
     onAdentroClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
-    onPerfilClick: () -> Unit = {}
+    onPerfilClick: () -> Unit = {},
+    viewModel: InsideViewModel = viewModel()
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopBarActualmenteAdentro() },
@@ -34,7 +41,7 @@ fun ActualmenteAdentroScreen(
                 adentro = true,
                 actividad = false,
                 perfil = false,
-                numeroSolicitudes = numeroSolicitudesJefe,
+                numeroSolicitudes = state.numeroSolicitudesJefe,
                 onSolicitudesClick = onSolicitudesClick,
                 onAdentroClick = onAdentroClick,
                 onActividadClick = onActividadClick,
@@ -43,7 +50,7 @@ fun ActualmenteAdentroScreen(
         }
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(
@@ -52,7 +59,7 @@ fun ActualmenteAdentroScreen(
             )
         ) {
             item {
-                ResumenPersonasAdentro(cantidad = 5)
+                ResumenPersonasAdentro(cantidad = state.totalAdentro)
 
                 Spacer(modifier = Modifier.height(12.dp))
             }

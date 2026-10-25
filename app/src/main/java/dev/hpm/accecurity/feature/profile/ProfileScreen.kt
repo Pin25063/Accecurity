@@ -5,9 +5,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hpm.accecurity.core.model.TipoUsuario
 import dev.hpm.accecurity.core.ui.components.navigation.*
 import dev.hpm.accecurity.core.ui.components.profile.*
@@ -34,7 +37,7 @@ import dev.hpm.accecurity.core.ui.components.topbar.TopBarPerfil
 fun PerfilScreen(
     nombre: String = "Carlos Mendoza",
     iniciales: String = "CM",
-    tipoUsuario: TipoUsuario,
+    tipoUsuario: TipoUsuario = TipoUsuario.ADMIN,
     numeroSolicitudesJefe: Int = 0,
     onInicioClick: () -> Unit = {},
     onPasesClick: () -> Unit = {},
@@ -44,8 +47,11 @@ fun PerfilScreen(
     onSolicitudesClick: () -> Unit = onInicioClick,
     onAdentroClick: () -> Unit = onPasesClick,
     onEscanerClick: () -> Unit = {},
-    onRegistroClick: () -> Unit = {}
+    onRegistroClick: () -> Unit = {},
+    viewModel: ProfileViewModel = viewModel()
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopBarPerfil() },
@@ -79,7 +85,7 @@ fun PerfilScreen(
                         adentro = false,
                         actividad = false,
                         perfil = true,
-                        numeroSolicitudes = numeroSolicitudesJefe,
+                        numeroSolicitudes = state.numeroSolicitudesJefe,
                         onSolicitudesClick = onSolicitudesClick,
                         onAdentroClick = onAdentroClick,
                         onActividadClick = onActividadClick,
@@ -99,8 +105,8 @@ fun PerfilScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             TarjetaInformacionUsuario(
-                iniciales = iniciales,
-                nombre = nombre,
+                iniciales = state.iniciales,
+                nombre = state.nombre,
                 tipoUsuario = tipoUsuario
             )
 

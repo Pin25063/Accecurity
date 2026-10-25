@@ -7,12 +7,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.hpm.accecurity.core.data.obtenerPasesFalsos
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarAdminYResidente
 import dev.hpm.accecurity.core.ui.components.pass.*
 import dev.hpm.accecurity.core.ui.components.topbar.TopBarInicioAdminYResidente
@@ -28,8 +30,11 @@ fun PasesScreenAdminYResidente(
     onInicioClick: () -> Unit = {},
     onPasesClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
-    onPerfilClick: () -> Unit = {}
+    onPerfilClick: () -> Unit = {},
+    viewModel: PasesViewModel = viewModel()
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -75,7 +80,7 @@ fun PasesScreenAdminYResidente(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            items(obtenerPasesFalsos()) { pase ->
+            items(state.pases) { pase ->
                 PaseItem(pase = pase)
             }
 
@@ -92,8 +97,11 @@ fun HomeScreenAdmin(
     onInicioClick: () -> Unit = {},
     onPasesClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
-    onPerfilClick: () -> Unit = {}
+    onPerfilClick: () -> Unit = {},
+    viewModel: PasesViewModel = viewModel()
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopBarInicioAdminYResidente() },
@@ -169,15 +177,15 @@ fun HomeScreenAdmin(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        FiltroChip(texto = "Todos", seleccionado = true)
-                        FiltroChip(texto = "Esperados", seleccionado = false)
-                        FiltroChip(texto = "Adentro", seleccionado = false)
-                        FiltroChip(texto = "Salieron", seleccionado = false)
+                        FiltroChip(texto = "Todos", seleccionado = state.filtroSeleccionado == "Todos")
+                        FiltroChip(texto = "Esperados", seleccionado = state.filtroSeleccionado == "Esperados")
+                        FiltroChip(texto = "Adentro", seleccionado = state.filtroSeleccionado == "Adentro")
+                        FiltroChip(texto = "Salieron", seleccionado = state.filtroSeleccionado == "Salieron")
                     }
                 }
             }
 
-            items(obtenerPasesFalsos()) { pase ->
+            items(state.pases) { pase ->
                 PaseItem(pase = pase)
             }
 

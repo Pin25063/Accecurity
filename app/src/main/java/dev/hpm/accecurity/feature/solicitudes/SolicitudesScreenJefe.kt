@@ -5,13 +5,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.hpm.accecurity.core.data.contarSolicitudesPendientes
-import dev.hpm.accecurity.core.data.obtenerSolicitudesFalsas
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarJefe
 import dev.hpm.accecurity.core.ui.components.solicitud.BadgePendientes
 import dev.hpm.accecurity.core.ui.components.solicitud.SolicitudItem
@@ -26,10 +27,12 @@ fun SolicitudesScreenJefe(
     onSolicitudesClick: () -> Unit = {},
     onAdentroClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
-    onPerfilClick: () -> Unit = {}
+    onPerfilClick: () -> Unit = {},
+    viewModel: SolicitudesViewModel = viewModel()
 ) {
-    val solicitudes = obtenerSolicitudesFalsas()
-    val pendientes = contarSolicitudesPendientes()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val solicitudes = state.solicitudes
+    val pendientes = state.pendientes
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

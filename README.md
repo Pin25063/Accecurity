@@ -1,33 +1,13 @@
-# Accecurity — Entrega: Vistas en Jetpack Compose
+# Accecurity
 
-App de control de acceso y visitantes para colegios y conjuntos residenciales. Proyecto de Programación de Plataformas Móviles, Universidad del Valle de Guatemala. Esta entrega implementa **todas las vistas a nivel visual**: Kotlin + Jetpack Compose + Material 3, con fuente de datos falsa (`MockPases`) y sin backend.
+Accecurity es una aplicación android diseñada para el control de acceso y gestión de visitantes en colegios y conjuntos residenciales. Su objetivo es optimizar y asegurar el registro de entradas y salidas, permitiendo a residentes, administradores, guardias y jefes de seguridad operar en un entorno interconectado y en tiempo real.
+## Servicios
+* **Firebase Authentication:** Se utiliza para gestionar el inicio de sesión de los usuarios de forma segura mediante correo electrónico y contraseña.
+* **Cloud Firestore:** Base de datos en la nube utilizada para almacenar y consultar el rol asignado a cada usuario autenticado (admin, residente, jefe, guardia) y definir sus permisos de navegación.
+* **Datos Locales (Fake Data):** Para cumplir con el requerimiento de la fase de desarrollo actual, la información de pases, solicitudes y registro de actividad se extrae de orígenes de datos locales estáticos (ej. `obtenerPasesFalsos()`, `obtenerSolicitudesFalsas()`). Esto simula la comunicación con una API externa para tener la app 100% navegable.
 
-## Funcionalidades
-
-Se implementan las siguientes pantallas y funcionalidades base, adaptando la navegación inferior (Bottom Navigation) según el rol del usuario (Admin, Residente, Guardia, Jefe de seguridad):
-
-| Funcionalidad | Pantallas |
-| :--- | :--- |
-| **Autenticación** | Login |
-| **Dashboard y Estadísticas** | Inicio (Admin y Residente) |
-| **Gestión de Pases** | Mis Pases (Invitaciones activas y recientes) |
-| **Monitoreo en Vivo** | Rastreo con filtros de estado (Esperados, Adentro, Salieron) |
-| **Perfiles por Rol** | Perfil (Adapta la UI y muestra credenciales/notificaciones) |
-
-*Nota: Quedan para fases posteriores el backend, el inicio de sesión real, la base de datos local y el escáner de códigos QR funcional.*
-
-## Estructura del Proyecto
-
-```text
-app/src/main/java/dev/hpm/accecurity/
-├── MainActivity.kt                 # Punto de entrada de la aplicación y tema principal
-├── data/
-│   └── MockPases.kt                # Datos temporales para las listas LazyColumn
-├── model/
-│   ├── PaseData.kt                 # Data class de la tarjeta del pase digital
-│   └── TipoUsuario.kt              # Enum con roles (ADMIN, RESIDENTE, GUARDIA, JEFE)
-└── ui/
-    ├── components/                 # TopBars, BottomNavBars y PassComponents reutilizables
-    ├── preview/                    # ScreenPreviews para validación de vistas sin emulador
-    ├── screens/                    # Pantallas (HomeScreenAdmin, LoginScreen, PasesScreen, etc.)
-    └── theme/                      # Configuración de Material 3 (Color, Theme, Type)
+## Librerías
+* **Jetpack Compose & Material 3:** Kit de herramientas principal para construir la interfaz de usuario de forma declarativa.
+* **Navigation Compose (Type-Safe):** Se utiliza en conjunto con `kotlinx.serialization` para manejar el enrutamiento interno de la aplicación basándose en objetos y clases seguras, evitando el uso de strings.
+* **ViewModel & StateFlow:** Componentes de la arquitectura de Android implementados para cumplir con el patrón MVI, manejando el estado de la UI y haciéndola reactiva a través de `collectAsStateWithLifecycle()`.
+* **Firebase (Auth & Firestore):** SDKs oficiales de Google para la validación de credenciales y consulta de documentos remotos.
