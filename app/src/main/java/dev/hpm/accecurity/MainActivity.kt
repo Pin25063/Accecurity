@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import dev.hpm.accecurity.ui.screens.FormularioLogIn
-import dev.hpm.accecurity.ui.theme.ProyectoTheme
+import dev.hpm.accecurity.appnavhost.AppNavHost
+import dev.hpm.accecurity.core.ui.theme.ProyectoTheme
 
 /**
  * Punto de entrada de la aplicación Accecurity.
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FormularioLogIn()
+                    AppNavHost()
                 }
             }
         }
