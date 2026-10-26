@@ -91,8 +91,46 @@ fun SolicitudesScreenJefe(
                 }
             }
 
-            items(solicitudes) { solicitud ->
-                SolicitudItem(solicitud = solicitud)
+            state.mensaje?.let { mensaje ->
+                item {
+                    Text(
+                        text = mensaje,
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            if (solicitudes.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay solicitudes pendientes.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            items(
+                items = solicitudes,
+                key = { it.id }
+            ) { solicitud ->
+                SolicitudItem(
+                    solicitud = solicitud,
+                    onRechazar = {
+                        viewModel.onEvent(
+                            SolicitudesEvent.RechazarSolicitud(solicitud.id)
+                        )
+                    },
+                    onAprobar = {
+                        viewModel.onEvent(
+                            SolicitudesEvent.AprobarSolicitud(solicitud.id)
+                        )
+                    }
+                )
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }

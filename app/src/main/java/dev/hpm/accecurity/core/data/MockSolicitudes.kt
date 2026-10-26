@@ -8,6 +8,7 @@ import dev.hpm.accecurity.core.model.SolicitudData
  */
 fun obtenerSolicitudesFalsas(): List<SolicitudData> = listOf(
     SolicitudData(
+        id = "solicitud-001",
         nombre = "Grupo Aseo S.A.",
         descripcion = "Equipo de limpieza · 3 personas",
         horario = "Hoy 14:00 – 17:00",
@@ -16,6 +17,7 @@ fun obtenerSolicitudesFalsas(): List<SolicitudData> = listOf(
         esUrgente = true
     ),
     SolicitudData(
+        id = "solicitud-002",
         nombre = "Mariana López",
         descripcion = "Docente suplente",
         horario = "Hoy 07:30 – 13:00",
@@ -24,6 +26,7 @@ fun obtenerSolicitudesFalsas(): List<SolicitudData> = listOf(
         esUrgente = false
     ),
     SolicitudData(
+        id = "solicitud-003",
         nombre = "Soporte Técnico",
         descripcion = "Instalación de internet",
         horario = "Mañana 09:00 – 11:00",

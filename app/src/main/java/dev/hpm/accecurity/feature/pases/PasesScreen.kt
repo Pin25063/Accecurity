@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import dev.hpm.accecurity.core.ui.components.pass.*
 import dev.hpm.accecurity.core.ui.components.topbar.TopBarInicioAdminYResidente
 import dev.hpm.accecurity.core.ui.theme.StatusExpectedContainer
 import dev.hpm.accecurity.core.ui.theme.StatusInsideContainer
+import dev.hpm.accecurity.core.model.PaseData
 
 /**
  * Pantalla de listado de pases del usuario (admin y residente).
@@ -34,6 +36,15 @@ fun PasesScreenAdminYResidente(
     viewModel: PasesViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    state.paseSeleccionado?.let { pase ->
+        DetallePaseDialog(
+            pase = pase,
+            onCerrar = {
+                viewModel.onEvent(PasesEvent.CerrarDetalle)
+            }
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -81,7 +92,12 @@ fun PasesScreenAdminYResidente(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(state.pases) { pase ->
-                PaseItem(pase = pase)
+                PaseItem(
+                    pase = pase,
+                    onClick = {
+                        viewModel.onEvent(PasesEvent.VerDetalle(pase))
+                    }
+                )
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -101,6 +117,22 @@ fun HomeScreenAdmin(
     viewModel: PasesViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    state.paseSeleccionado?.let { pase ->
+        DetallePaseDialog(
+            pase = pase,
+            onCerrar = {
+                viewModel.onEvent(PasesEvent.CerrarDetalle)
+            }
+        )
+    }
+
+    if (state.mostrarFormulario) {
+        CrearPaseDialog(
+            state = state,
+            onEvent = viewModel::onEvent
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -127,7 +159,11 @@ fun HomeScreenAdmin(
         ) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                BotonCrearPase(onClick = { })
+                BotonCrearPase(
+                    onClick = {
+                        viewModel.onEvent(PasesEvent.CrearPase)
+                    }
+                )
             }
 
             item {
@@ -136,19 +172,19 @@ fun HomeScreenAdmin(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CuadroEstadistica(
-                        titulo = "2",
+                        titulo = state.totalEsperados.toString(),
                         subtitulo = "Esperados",
                         colorFondo = StatusExpectedContainer,
                         modifier = Modifier.weight(1f)
                     )
                     CuadroEstadistica(
-                        titulo = "2",
+                        titulo = state.totalAdentro.toString(),
                         subtitulo = "Adentro",
                         colorFondo = StatusInsideContainer,
                         modifier = Modifier.weight(1f)
                     )
                     CuadroEstadistica(
-                        titulo = "1",
+                        titulo = state.totalSalieron.toString(),
                         subtitulo = "Salieron",
                         colorFondo = MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier.weight(1f)
@@ -177,19 +213,241 @@ fun HomeScreenAdmin(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        FiltroChip(texto = "Todos", seleccionado = state.filtroSeleccionado == "Todos")
-                        FiltroChip(texto = "Esperados", seleccionado = state.filtroSeleccionado == "Esperados")
-                        FiltroChip(texto = "Adentro", seleccionado = state.filtroSeleccionado == "Adentro")
-                        FiltroChip(texto = "Salieron", seleccionado = state.filtroSeleccionado == "Salieron")
+                        FiltroChip(
+                            texto = "Todos",
+                            seleccionado = state.filtroSeleccionado == "Todos",
+                            onClick = {
+                                viewModel.onEvent(
+                                    PasesEvent.CambiarFiltro("Todos")
+                                )
+                            }
+                        )
+                        FiltroChip(
+                            texto = "Esperados",
+                            seleccionado = state.filtroSeleccionado == "Esperados",
+                            onClick = {
+                                viewModel.onEvent(
+                                    PasesEvent.CambiarFiltro("Esperados")
+                                )
+                            }
+                        )
+                        FiltroChip(
+                            texto = "Adentro",
+                            seleccionado = state.filtroSeleccionado == "Adentro",
+                            onClick = {
+                                viewModel.onEvent(
+                                    PasesEvent.CambiarFiltro("Adentro")
+                                )
+                            }
+                        )
+                        FiltroChip(
+                            texto = "Salieron",
+                            seleccionado = state.filtroSeleccionado == "Salieron",
+                            onClick = {
+                                viewModel.onEvent(
+                                    PasesEvent.CambiarFiltro("Salieron")
+                                )
+                            }
+                        )
                     }
                 }
             }
 
-            items(state.pases) { pase ->
-                PaseItem(pase = pase)
+            if (state.pasesFiltrados.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay pases para este filtro.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            items(state.pasesFiltrados) { pase ->
+                PaseItem(
+                    pase = pase,
+                    onClick = {
+                        viewModel.onEvent(PasesEvent.VerDetalle(pase))
+                    }
+                )
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
+}
+
+/**
+ * Formulario de creación de un pase digital.
+ */
+@Composable
+private fun CrearPaseDialog(
+    state: PasesState,
+    onEvent: (PasesEvent) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            onEvent(PasesEvent.CancelarCreacion)
+        },
+        title = {
+            Text(text = "Crear pase digital")
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = state.nombreVisitante,
+                    onValueChange = {
+                        onEvent(PasesEvent.CambiarNombre(it))
+                    },
+                    label = {
+                        Text(text = "Nombre del visitante")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = state.descripcionVisita,
+                    onValueChange = {
+                        onEvent(PasesEvent.CambiarDescripcion(it))
+                    },
+                    label = {
+                        Text(text = "Motivo y destino de la visita")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 3
+                )
+
+                OutlinedTextField(
+                    value = state.horaVisita,
+                    onValueChange = {
+                        onEvent(PasesEvent.CambiarHora(it))
+                    },
+                    label = {
+                        Text(text = "Hora de la visita")
+                    },
+                    supportingText = {
+                        Text(text = "Formato de 24 horas. Ejemplo: 14:30")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                state.errorFormulario?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onEvent(PasesEvent.GuardarPase)
+                }
+            ) {
+                Text(text = "Crear pase")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onEvent(PasesEvent.CancelarCreacion)
+                }
+            ) {
+                Text(text = "Cancelar")
+            }
+        }
+    )
+}
+
+/**
+ * Diálogo con la información del pase seleccionado.
+ */
+@Composable
+private fun DetallePaseDialog(
+    pase: PaseData,
+    onCerrar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        title = {
+            Text(text = "Detalle del pase")
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Visitante",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = pase.nombre,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Motivo y destino",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = pase.descripcion,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Estado",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = pase.estado,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Hora",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = pase.hora,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onCerrar) {
+                Text(text = "Cerrar")
+            }
+        }
+    )
 }

@@ -116,8 +116,15 @@ fun CuadroEstadistica(
 /**
  * Chip de filtro horizontal para estados de pases.
  */
+/**
+ * Chip de filtro horizontal para estados de pases.
+ */
 @Composable
-fun FiltroChip(texto: String, seleccionado: Boolean) {
+fun FiltroChip(
+    texto: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit
+) {
     val backgroundColor = if (seleccionado) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
@@ -136,17 +143,28 @@ fun FiltroChip(texto: String, seleccionado: Boolean) {
 
     Box(
         modifier = Modifier
-            .background(color = backgroundColor, shape = RoundedCornerShape(20.dp))
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { },
+            .background(
+                color = backgroundColor,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = texto,
             fontSize = 14.sp,
             color = textColor,
-            fontWeight = if (seleccionado) FontWeight.SemiBold else FontWeight.Normal
+            fontWeight = if (seleccionado) {
+                FontWeight.SemiBold
+            } else {
+                FontWeight.Normal
+            }
         )
     }
 }
@@ -155,13 +173,16 @@ fun FiltroChip(texto: String, seleccionado: Boolean) {
  * Fila de lista que representa un pase individual con estado y hora.
  */
 @Composable
-fun PaseItem(pase: PaseData) {
+fun PaseItem(
+    pase: PaseData,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
-            .clickable { }
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
