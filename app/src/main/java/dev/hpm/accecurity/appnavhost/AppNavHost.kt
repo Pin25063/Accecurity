@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import com.google.firebase.auth.FirebaseAuth
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -13,13 +12,13 @@ import dev.hpm.accecurity.core.model.TipoUsuario
 import dev.hpm.accecurity.feature.activity.ActivityScreen
 import dev.hpm.accecurity.feature.inside.ActualmenteAdentroScreen
 import dev.hpm.accecurity.feature.escaner.EscanerScreenGuardia
-import dev.hpm.accecurity.feature.escaner.RegistroGaritaScreen
 import dev.hpm.accecurity.feature.login.FormularioLogIn
 import dev.hpm.accecurity.feature.pases.HomeScreenAdmin
 import dev.hpm.accecurity.feature.pases.PasesScreenAdminYResidente
 import dev.hpm.accecurity.feature.profile.PerfilScreen
 import dev.hpm.accecurity.feature.solicitudes.SolicitudesScreenJefe
 import kotlinx.serialization.Serializable
+import dev.hpm.accecurity.feature.registro.RegistroGaritaScreen
 
 @Serializable
 object LoginDestination
@@ -67,9 +66,9 @@ object GuardiaRegistroDestination
 object GuardiaPerfilDestination
 
 private fun NavHostController.navigateToLoginAfterSignOut() {
-    FirebaseAuth.getInstance().signOut()
     navigate(LoginDestination) {
         popUpTo(0) { inclusive = true }
+        launchSingleTop = true
     }
 }
 

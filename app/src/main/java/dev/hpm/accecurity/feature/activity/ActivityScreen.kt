@@ -21,6 +21,10 @@ import dev.hpm.accecurity.core.model.TipoUsuario
 import dev.hpm.accecurity.core.ui.components.activity.ActividadItem
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarAdminYResidente
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarJefe
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.LaunchedEffect
+import dev.hpm.accecurity.core.model.ActividadData
+import dev.hpm.accecurity.core.model.TipoActividad
 
 /**
  * Pantalla de actividad del usuario. Adapta la barra inferior según el rol.
@@ -45,6 +49,15 @@ fun ActivityScreen(
     viewModel: ActivityViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(tipoUsuario, numeroSolicitudesJefe) {
+        viewModel.onEvent(
+            ActivityEvent.ConfigurarPantalla(
+                tipoUsuario = tipoUsuario,
+                numeroSolicitudesJefe = numeroSolicitudesJefe
+            )
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -75,7 +88,7 @@ fun ActivityScreen(
             }
         },
         bottomBar = {
-            when (tipoUsuario) {
+            when (state.tipoUsuario) {
                 TipoUsuario.ADMIN, TipoUsuario.RESIDENTE -> {
                     BottomNavigationBarAdminYResidente(
                         inicio = false,
@@ -116,49 +129,60 @@ fun ActivityScreen(
                 vertical = 8.dp
             )
         ) {
-            item {
-                ActividadItem(
-                    titulo = "Laura Méndez ingresó",
-                    descripcion = "Visita principal · QR verificado",
-                    hora = "09:12",
-                    icono = Icons.Outlined.Login,
-                    colorIcono = Color(0xFF287D3C),
-                    colorFondo = Color(0xFFDDF3E2)
-                )
+            if (state.actividades.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay actividad registrada.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            item {
-                ActividadItem(
-                    titulo = "Pase digital creado",
-                    descripcion = "Para Diego Salas · 11:00",
-                    hora = "08:47",
-                    icono = Icons.Outlined.ConfirmationNumber,
-                    colorIcono = MaterialTheme.colorScheme.primary,
-                    colorFondo = MaterialTheme.colorScheme.primaryContainer
-                )
-            }
-
-            item {
-                ActividadItem(
-                    titulo = "Carlos Núñez salió",
-                    descripcion = "Garita principal",
-                    hora = "08:35",
-                    icono = Icons.AutoMirrored.Outlined.ExitToApp,
-                    colorIcono = MaterialTheme.colorScheme.onSurfaceVariant,
-                    colorFondo = MaterialTheme.colorScheme.surfaceVariant
-                )
-            }
-
-            item {
-                ActividadItem(
-                    titulo = "Código vencido rechazado",
-                    descripcion = "Garita de servicio · ACC-4070",
-                    hora = "08:21",
-                    icono = Icons.Outlined.WarningAmber,
-                    colorIcono = Color(0xFFB3261E),
-                    colorFondo = Color(0xFFFCE4E2)
-                )
+            items(
+                items = state.actividades,
+                key = { it.id }
+            ) { actividad ->
+                RegistroActividadItem(actividad = actividad)
             }
         }
     }
+}
+
+/**
+ * Representación visual de un movimiento según su tipo.
+ */
+@Composable
+private fun RegistroActividadItem(actividad: ActividadData) {
+    val icono = when (actividad.tipo) {
+        TipoActividad.ENTRADA -> Icons.Outlined.Login
+        TipoActividad.PASE_CREADO -> Icons.Outlined.ConfirmationNumber
+        TipoActividad.SALIDA -> Icons.AutoMirrored.Outlined.ExitToApp
+        TipoActividad.RECHAZO -> Icons.Outlined.WarningAmber
+    }
+
+    val colorIcono = when (actividad.tipo) {
+        TipoActividad.ENTRADA -> Color(0xFF287D3C)
+        TipoActividad.PASE_CREADO -> MaterialTheme.colorScheme.primary
+        TipoActividad.SALIDA -> MaterialTheme.colorScheme.onSurfaceVariant
+        TipoActividad.RECHAZO -> Color(0xFFB3261E)
+    }
+
+    val colorFondo = when (actividad.tipo) {
+        TipoActividad.ENTRADA -> Color(0xFFDDF3E2)
+        TipoActividad.PASE_CREADO -> MaterialTheme.colorScheme.primaryContainer
+        TipoActividad.SALIDA -> MaterialTheme.colorScheme.surfaceVariant
+        TipoActividad.RECHAZO -> Color(0xFFFCE4E2)
+    }
+
+    ActividadItem(
+        titulo = actividad.titulo,
+        descripcion = actividad.descripcion,
+        hora = actividad.hora,
+        icono = icono,
+        colorIcono = colorIcono,
+        colorFondo = colorFondo
+    )
 }

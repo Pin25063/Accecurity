@@ -3,6 +3,7 @@ package dev.hpm.accecurity.core.model
 /**
  * Modelo de una solicitud de acceso pendiente de aprobación.
  *
+ * @property id Identificador único de la solicitud.
  * @property nombre Nombre del visitante o grupo solicitante.
  * @property descripcion Motivo o detalle breve de la visita.
  * @property horario Rango horario de la visita.
@@ -11,6 +12,7 @@ package dev.hpm.accecurity.core.model
  * @property esUrgente Indica si la solicitud requiere atención prioritaria.
  */
 data class SolicitudData(
+    val id: String,
     val nombre: String,
     val descripcion: String,
     val horario: String,
