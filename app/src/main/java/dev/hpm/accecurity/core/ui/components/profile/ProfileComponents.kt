@@ -98,11 +98,15 @@ fun TarjetaInformacionUsuario(
  * Fila individual del menú de perfil con icono y flecha de navegación.
  */
 @Composable
-fun OpcionMenu(icono: ImageVector, texto: String) {
+fun OpcionMenu(
+    icono: ImageVector,
+    texto: String,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { }
+            .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -131,18 +135,51 @@ fun OpcionMenu(icono: ImageVector, texto: String) {
  * Bloque de opciones del menú de perfil (notificaciones, preferencias, ayuda).
  */
 @Composable
-fun MenuPerfil() {
+fun MenuPerfil(
+    onNotificacionesClick: () -> Unit = {},
+    onPreferenciasClick: () -> Unit = {},
+    onAyudaClick: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
+            .background(
+                MaterialTheme.colorScheme.surface,
+                RoundedCornerShape(24.dp)
+            )
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(24.dp)
+            )
     ) {
-        OpcionMenu(icono = Icons.Outlined.Notifications, texto = "Notificaciones")
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-        OpcionMenu(icono = Icons.Outlined.Settings, texto = "Preferencias")
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-        OpcionMenu(icono = Icons.Outlined.HelpOutline, texto = "Ayuda y soporte")
+        OpcionMenu(
+            icono = Icons.Outlined.Notifications,
+            texto = "Notificaciones",
+            onClick = onNotificacionesClick
+        )
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 1.dp
+        )
+
+        OpcionMenu(
+            icono = Icons.Outlined.Settings,
+            texto = "Preferencias",
+            onClick = onPreferenciasClick
+        )
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 1.dp
+        )
+
+        OpcionMenu(
+            icono = Icons.Outlined.HelpOutline,
+            texto = "Ayuda y soporte",
+            onClick = onAyudaClick
+        )
     }
 }
 

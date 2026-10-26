@@ -2,9 +2,12 @@ package dev.hpm.accecurity.feature.inside
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,6 +34,14 @@ fun InsideScreen(
     viewModel: InsideViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(numeroSolicitudesJefe) {
+        viewModel.onEvent(
+            InsideEvent.ConfigurarPantalla(
+                numeroSolicitudesJefe = numeroSolicitudesJefe
+            )
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -64,48 +75,27 @@ fun InsideScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            item {
-                PersonaAdentroItem(
-                    nombre = "Laura Méndez",
-                    descripcion = "Visita familiar",
-                    destino = "Secretaría",
-                    horaEntrada = "09:12"
-                )
+            if (state.personas.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay personas dentro de las instalaciones.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            item {
+            items(
+                items = state.personas,
+                key = { it.id }
+            ) { persona ->
                 PersonaAdentroItem(
-                    nombre = "Mensajero DHL",
-                    descripcion = "Entrega de paquete",
-                    destino = "Recepción",
-                    horaEntrada = "09:40"
-                )
-            }
-
-            item {
-                PersonaAdentroItem(
-                    nombre = "Diego Salas",
-                    descripcion = "Mantenimiento",
-                    destino = "Área técnica",
-                    horaEntrada = "10:00"
-                )
-            }
-
-            item {
-                PersonaAdentroItem(
-                    nombre = "Prof. Ramírez",
-                    descripcion = "Reunión",
-                    destino = "Dirección",
-                    horaEntrada = "10:15"
-                )
-            }
-
-            item {
-                PersonaAdentroItem(
-                    nombre = "Sofía Cano",
-                    descripcion = "Visita",
-                    destino = "Secretaría",
-                    horaEntrada = "10:30"
+                    nombre = persona.nombre,
+                    descripcion = persona.descripcion,
+                    destino = persona.destino,
+                    horaEntrada = persona.horaEntrada
                 )
             }
         }

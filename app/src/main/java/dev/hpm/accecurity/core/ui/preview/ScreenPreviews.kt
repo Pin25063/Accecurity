@@ -10,7 +10,7 @@ import dev.hpm.accecurity.core.model.TipoUsuario
 import dev.hpm.accecurity.core.ui.theme.ProyectoTheme
 import dev.hpm.accecurity.feature.activity.ActivityScreen
 import dev.hpm.accecurity.feature.escaner.EscanerScreenGuardia
-import dev.hpm.accecurity.feature.escaner.RegistroGaritaScreen
+import dev.hpm.accecurity.feature.registro.RegistroGaritaScreen
 import dev.hpm.accecurity.feature.inside.ActualmenteAdentroScreen
 import dev.hpm.accecurity.feature.login.FormularioLogIn
 import dev.hpm.accecurity.feature.pases.HomeScreenAdmin
