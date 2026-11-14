@@ -90,7 +90,7 @@ fun VisorQrPlaceholder(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EsquinaVisor(
+fun EsquinaVisor(
     modifier: Modifier = Modifier,
     espejoHorizontal: Boolean = false,
     espejoVertical: Boolean = false
@@ -118,6 +118,83 @@ private fun EsquinaVisor(
                     .height(28.dp)
                     .background(Color.White)
             )
+        }
+    }
+}
+
+/**
+ * Marco de escaneo superpuesto sobre la vista en vivo de la cámara.
+ */
+@Composable
+fun MarcoEscanerOverlay(
+    modifier: Modifier = Modifier,
+    textoGuia: String = "Apunta la cámara al código QR del visitante",
+    ultimoCodigo: String? = null
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(260.dp)
+                    .border(2.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(24.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                EsquinaVisor(modifier = Modifier.align(Alignment.TopStart))
+                EsquinaVisor(modifier = Modifier.align(Alignment.TopEnd), espejoHorizontal = true)
+                EsquinaVisor(modifier = Modifier.align(Alignment.BottomStart), espejoVertical = true)
+                EsquinaVisor(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    espejoHorizontal = true,
+                    espejoVertical = true
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(12.dp)
+                            .height(2.dp)
+                            .background(Color.White.copy(alpha = 0.6f))
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(48.dp)
+                            .height(2.dp)
+                            .background(Color.White.copy(alpha = 0.6f))
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(12.dp)
+                            .height(2.dp)
+                            .background(Color.White.copy(alpha = 0.6f))
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Surface(
+                color = Color.Black.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.padding(horizontal = 24.dp)
+            ) {
+                Text(
+                    text = if (!ultimoCodigo.isNullOrBlank()) "Último código leído: $ultimoCodigo" else textoGuia,
+                    fontSize = 14.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
         }
     }
 }

@@ -1,35 +1,56 @@
 package dev.hpm.accecurity.feature.escaner
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
-import androidx.compose.material.icons.automirrored.outlined.Login
-import androidx.compose.material.icons.outlined.ConfirmationNumber
+import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.hpm.accecurity.core.ui.components.activity.ActividadItem
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
 import dev.hpm.accecurity.core.ui.components.escaner.BadgeEnLinea
+import dev.hpm.accecurity.core.ui.components.escaner.MarcoEscanerOverlay
 import dev.hpm.accecurity.core.ui.components.escaner.VisorQrPlaceholder
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarGuardia
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Pantalla de escáner QR para el rol guardia de seguridad.
- * Solo interfaz visual; la funcionalidad de cámara se implementará después.
+ * Implementa captura real con CameraX y detección con Google ML Kit Barcode Scanning bajo arquitectura MVI.
  */
 @Composable
 fun EscanerScreenGuardia(
@@ -37,12 +58,196 @@ fun EscanerScreenGuardia(
     onEscanerClick: () -> Unit = {},
     onRegistroClick: () -> Unit = {},
     onPerfilClick: () -> Unit = {},
+    onRegistrarSalidaClick: () -> Unit = {},
     viewModel: EscanerViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val isInspectionMode = LocalInspectionMode.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Control de permisos de cámara en tiempo de ejecución
+    var tienePermisoCamara by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permisoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { concedido ->
+        tienePermisoCamara = concedido
+        viewModel.onEvent(EscanerEvent.PermisoCamaraActualizado(concedido))
+        if (!concedido) {
+            viewModel.onEvent(
+                EscanerEvent.ErrorOcurrido("Permiso de cámara denegado. Se requiere para escanear pases QR.")
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!tienePermisoCamara) {
+            permisoLauncher.launch(Manifest.permission.CAMERA)
+        } else {
+            viewModel.onEvent(EscanerEvent.PermisoCamaraActualizado(true))
+        }
+    }
+
+    // Manejo de mensajes de error y éxito mediante Snackbar y Toast
+    LaunchedEffect(state.mensajeError) {
+        state.mensajeError?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.onEvent(EscanerEvent.LimpiarMensajes)
+        }
+    }
+
+    LaunchedEffect(state.mensajeExito) {
+        state.mensajeExito?.let { exito ->
+            Toast.makeText(context, exito, Toast.LENGTH_SHORT).show()
+            snackbarHostState.showSnackbar(
+                message = exito,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.onEvent(EscanerEvent.LimpiarMensajes)
+        }
+    }
+
+    // Componentes para CameraX y ML Kit
+    val previewView = remember {
+        PreviewView(context).apply {
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+        }
+    }
+
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+    val barcodeScanner = remember {
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .build()
+        BarcodeScanning.getClient(options)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            analysisExecutor.shutdown()
+            barcodeScanner.close()
+        }
+    }
+
+    val framesRestantesManual = remember { AtomicInteger(0) }
+    val currentEstaEscaneando by rememberUpdatedState(state.estaEscaneando)
+    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+
+    // Inicialización y enlace del ciclo de vida de CameraX
+    LaunchedEffect(tienePermisoCamara, lifecycleOwner) {
+        if (!tienePermisoCamara || isInspectionMode) return@LaunchedEffect
+
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        cameraProviderFuture.addListener({
+            try {
+                val provider = cameraProviderFuture.get()
+                cameraProvider = provider
+
+                val preview = Preview.Builder().build().also {
+                    it.surfaceProvider = previewView.surfaceProvider
+                }
+
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+
+                imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
+                    val framesManual = framesRestantesManual.get()
+                    val esManual = framesManual > 0
+                    if (esManual) {
+                        framesRestantesManual.decrementAndGet()
+                    }
+
+                    // Si la lectura automática está pausada y no se solicitó escaneo manual, descartar frame
+                    if (!currentEstaEscaneando && !esManual) {
+                        imageProxy.close()
+                        return@setAnalyzer
+                    }
+
+                    @OptIn(ExperimentalGetImage::class)
+                    val mediaImage = imageProxy.image
+                    if (mediaImage != null) {
+                        val inputImage = InputImage.fromMediaImage(
+                            mediaImage,
+                            imageProxy.imageInfo.rotationDegrees
+                        )
+                        barcodeScanner.process(inputImage)
+                            .addOnSuccessListener { barcodes ->
+                                val qrValido = barcodes.firstOrNull { !it.rawValue.isNullOrBlank() }?.rawValue
+                                if (qrValido != null) {
+                                    framesRestantesManual.set(0)
+                                    viewModel.onEvent(EscanerEvent.CodigoEscaneado(qrValido))
+                                } else if (esManual && framesRestantesManual.get() <= 0) {
+                                    // El escaneo manual forzado no detectó ningún QR en los frames evaluados
+                                    viewModel.onEvent(
+                                        EscanerEvent.ErrorOcurrido("No se detectó ningún código QR en el visor. Ajusta el enfoque o la distancia.")
+                                    )
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                if (esManual && framesRestantesManual.get() <= 0) {
+                                    viewModel.onEvent(
+                                        EscanerEvent.ErrorOcurrido("Error al procesar el código: ${e.localizedMessage ?: "Fallo de lectura"}")
+                                    )
+                                }
+                            }
+                            .addOnCompleteListener {
+                                imageProxy.close()
+                            }
+                    } else {
+                        if (esManual && framesRestantesManual.get() <= 0) {
+                            viewModel.onEvent(
+                                EscanerEvent.ErrorOcurrido("No se pudo obtener imagen del sensor de la cámara.")
+                            )
+                        }
+                        imageProxy.close()
+                    }
+                }
+
+                val cameraSelector = if (provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
+                    CameraSelector.DEFAULT_BACK_CAMERA
+                } else {
+                    CameraSelector.DEFAULT_FRONT_CAMERA
+                }
+
+                provider.unbindAll()
+                provider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageAnalysis
+                )
+            } catch (e: Exception) {
+                viewModel.onEvent(
+                    EscanerEvent.ErrorOcurrido("Error al inicializar la cámara: ${e.localizedMessage ?: "Fallo desconocido"}")
+                )
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            cameraProvider?.unbindAll()
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             Row(
                 modifier = Modifier
@@ -83,12 +288,61 @@ fun EscanerScreenGuardia(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            VisorQrPlaceholder(
+            // Visor de Cámara Real con superposición de marco guía
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-            )
+                    .background(Color(0xFF232628)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isInspectionMode) {
+                    VisorQrPlaceholder(modifier = Modifier.fillMaxSize())
+                } else if (!tienePermisoCamara) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CameraAlt,
+                            contentDescription = "Permiso de cámara",
+                            tint = Color.White,
+                            modifier = Modifier.size(56.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Se requiere acceso a la cámara para escanear los códigos QR de los visitantes.",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(
+                            onClick = { permisoLauncher.launch(Manifest.permission.CAMERA) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Text(text = "Conceder permiso")
+                        }
+                    }
+                } else {
+                    AndroidView(
+                        factory = { previewView },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    MarcoEscanerOverlay(
+                        modifier = Modifier.fillMaxSize(),
+                        ultimoCodigo = state.ultimoCodigoEscaneado
+                    )
+                }
+            }
 
+            // Botones inferiores de acción
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,7 +351,21 @@ fun EscanerScreenGuardia(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
-                    onClick = { },
+                    onClick = {
+                        if (!tienePermisoCamara) {
+                            permisoLauncher.launch(Manifest.permission.CAMERA)
+                        } else if (cameraProvider == null) {
+                            viewModel.onEvent(
+                                EscanerEvent.ErrorOcurrido("La cámara aún se está inicializando o no está disponible.")
+                            )
+                        } else {
+                            if (!state.estaEscaneando) {
+                                viewModel.onEvent(EscanerEvent.ReiniciarEscaner)
+                            }
+                            // Solicita forzar la lectura en los siguientes frames
+                            framesRestantesManual.set(5)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -114,14 +382,18 @@ fun EscanerScreenGuardia(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Escanear código QR",
+                        text = if (!state.estaEscaneando && state.ultimoCodigoEscaneado != null) {
+                            "Escanear otro código"
+                        } else {
+                            "Escanear código QR"
+                        },
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
 
                 OutlinedButton(
-                    onClick = { },
+                    onClick = onRegistrarSalidaClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
