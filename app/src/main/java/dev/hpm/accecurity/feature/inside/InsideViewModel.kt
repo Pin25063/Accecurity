@@ -3,6 +3,7 @@ package dev.hpm.accecurity.feature.inside
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hpm.accecurity.core.data.AppGraph
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,7 +42,7 @@ class InsideViewModel : ViewModel() {
             }
 
             InsideEvent.RefrescarPersonasAdentro -> {
-                viewModelScope.launch {
+                viewModelScope.launch(Dispatchers.IO) {
                     try {
                         AppGraph.repository.refresh()
                     } catch (_: Exception) {

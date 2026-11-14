@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import dev.hpm.accecurity.core.database.entity.MovementEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -17,4 +18,10 @@ interface MovementDao {
 
     @Query("DELETE FROM movements")
     suspend fun clear()
+
+    @Transaction
+    suspend fun replaceAll(movements: List<MovementEntity>) {
+        clear()
+        upsertAll(movements)
+    }
 }

@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import dev.hpm.accecurity.core.auth.AuthRepository
 import dev.hpm.accecurity.core.auth.SignInResult
 import dev.hpm.accecurity.core.data.AppGraph
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel de login. Expone la sesión autenticada para que la navegación
@@ -43,8 +45,8 @@ class LoginViewModel(
             return
         }
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null, session = null) }
+        _uiState.update { it.copy(isLoading = true, errorMessage = null, session = null) }
+        viewModelScope.launch(Dispatchers.IO) {
             when (val result = authRepository.signIn(email, password)) {
                 is SignInResult.Success -> {
                     try {
@@ -53,13 +55,17 @@ class LoginViewModel(
                     } catch (_: Exception) {
                         // El login sigue. Las pantallas quedan vacías si Firestore niega la lectura.
                     }
-                    _uiState.update {
-                        it.copy(isLoading = false, session = result.session)
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(isLoading = false, session = result.session)
+                        }
                     }
                 }
                 is SignInResult.Failure -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, errorMessage = result.message)
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(isLoading = false, errorMessage = result.message)
+                        }
                     }
                 }
             }

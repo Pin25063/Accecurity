@@ -105,7 +105,11 @@ fun SolicitudesScreenJefe(
             if (solicitudes.isEmpty()) {
                 item {
                     Text(
-                        text = "No hay solicitudes pendientes.",
+                        text = if (state.isLoading) {
+                            "Cargando solicitudes..."
+                        } else {
+                            "No hay solicitudes pendientes."
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 16.dp),

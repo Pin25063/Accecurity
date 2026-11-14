@@ -3,6 +3,7 @@ package dev.hpm.accecurity.feature.registro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hpm.accecurity.core.data.AppGraph
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +30,7 @@ class RegistroViewModel : ViewModel() {
     fun onEvent(event: RegistroEvent) {
         when (event) {
             RegistroEvent.ActualizarRegistro -> {
-                viewModelScope.launch {
+                viewModelScope.launch(Dispatchers.IO) {
                     try {
                         AppGraph.repository.refresh()
                     } catch (_: Exception) {

@@ -164,6 +164,14 @@ fun HomeScreenAdmin(
                         viewModel.onEvent(PasesEvent.CrearPase)
                     }
                 )
+                state.mensaje?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        modifier = Modifier.padding(top = 12.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 14.sp
+                    )
+                }
             }
 
             item {
@@ -289,7 +297,7 @@ private fun CrearPaseDialog(
 ) {
     AlertDialog(
         onDismissRequest = {
-            onEvent(PasesEvent.CancelarCreacion)
+            if (!state.guardando) onEvent(PasesEvent.CancelarCreacion)
         },
         title = {
             Text(text = "Crear pase digital")
@@ -352,16 +360,18 @@ private fun CrearPaseDialog(
             TextButton(
                 onClick = {
                     onEvent(PasesEvent.GuardarPase)
-                }
+                },
+                enabled = !state.guardando
             ) {
-                Text(text = "Crear pase")
+                Text(text = if (state.guardando) "Enviando..." else "Enviar solicitud")
             }
         },
         dismissButton = {
             TextButton(
                 onClick = {
                     onEvent(PasesEvent.CancelarCreacion)
-                }
+                },
+                enabled = !state.guardando
             ) {
                 Text(text = "Cancelar")
             }

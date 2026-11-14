@@ -13,5 +13,6 @@ object AppGraph {
     fun init(context: Context) {
         if (::repository.isInitialized) return
         repository = AccessRepository(AccecurityDatabase.get(context))
+        repository.startSyncWithAuth()
     }
 }
