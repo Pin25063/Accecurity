@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import dev.hpm.accecurity.core.database.entity.PassEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -23,4 +24,10 @@ interface PassDao {
 
     @Query("DELETE FROM passes")
     suspend fun clear()
+
+    @Transaction
+    suspend fun replaceAll(passes: List<PassEntity>) {
+        clear()
+        upsertAll(passes)
+    }
 }

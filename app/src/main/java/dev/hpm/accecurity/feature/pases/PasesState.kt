@@ -17,6 +17,8 @@ data class PasesState(
     val descripcionVisita: String = "",
     val horaVisita: String = "",
     val errorFormulario: String? = null,
+    val guardando: Boolean = false,
+    val mensaje: String? = null,
     val isLoading: Boolean = false,
     val paseSeleccionado: PaseData? = null
 )

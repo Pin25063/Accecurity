@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hpm.accecurity.core.data.AppGraph
 import dev.hpm.accecurity.core.model.PaseData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel para gestionar el estado y eventos de Pases bajo arquitectura MVI.
@@ -55,7 +57,8 @@ class PasesViewModel : ViewModel() {
                         nombreVisitante = "",
                         descripcionVisita = "",
                         horaVisita = "",
-                        errorFormulario = null
+                        errorFormulario = null,
+                        mensaje = null
                     )
                 }
             }
@@ -121,7 +124,7 @@ class PasesViewModel : ViewModel() {
     private fun guardarPase() {
         val state = _uiState.value
 
-        if (!state.mostrarFormulario) return
+        if (!state.mostrarFormulario || state.guardando) return
 
         val nombre = state.nombreVisitante.trim()
         val descripcion = state.descripcionVisita.trim()
@@ -143,19 +146,27 @@ class PasesViewModel : ViewModel() {
             return
         }
 
-        viewModelScope.launch {
-            val saved = AppGraph.repository.createExpectedPass(nombre, descripcion, hora)
-            _uiState.update { actual ->
-                if (!saved) {
-                    actual.copy(errorFormulario = "No se pudo guardar el pase.")
-                } else {
-                    actual.copy(
-                        mostrarFormulario = false,
-                        nombreVisitante = "",
-                        descripcionVisita = "",
-                        horaVisita = "",
-                        errorFormulario = null
-                    )
+        _uiState.update { it.copy(guardando = true, errorFormulario = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            val saved = AppGraph.repository.createAccessRequest(nombre, descripcion, hora)
+            withContext(Dispatchers.Main) {
+                _uiState.update { actual ->
+                    if (!saved) {
+                        actual.copy(
+                            guardando = false,
+                            errorFormulario = "No se pudo enviar la solicitud."
+                        )
+                    } else {
+                        actual.copy(
+                            guardando = false,
+                            mostrarFormulario = false,
+                            nombreVisitante = "",
+                            descripcionVisita = "",
+                            horaVisita = "",
+                            errorFormulario = null,
+                            mensaje = "Solicitud de $nombre enviada. El jefe debe autorizarla."
+                        )
+                    }
                 }
             }
         }

@@ -11,5 +11,6 @@ data class SolicitudesState(
     val solicitudesRechazadas: List<SolicitudData> = emptyList(),
     val pendientes: Int = 0,
     val mensaje: String? = null,
+    val procesando: Boolean = false,
     val isLoading: Boolean = false
 )
