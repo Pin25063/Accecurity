@@ -1,11 +1,13 @@
 package dev.hpm.accecurity.feature.activity
 
 import androidx.lifecycle.ViewModel
-import dev.hpm.accecurity.core.data.obtenerActividadFalsa
+import androidx.lifecycle.viewModelScope
+import dev.hpm.accecurity.core.data.AppGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel para gestionar el estado y eventos de Actividad bajo arquitectura MVI.
@@ -15,7 +17,13 @@ class ActivityViewModel : ViewModel() {
     val uiState: StateFlow<ActivityState> = _uiState.asStateFlow()
 
     init {
-        cargarActividad()
+        viewModelScope.launch {
+            AppGraph.repository.observeMovements().collect { actividades ->
+                _uiState.update {
+                    it.copy(actividades = actividades, isLoading = false)
+                }
+            }
+        }
     }
 
     fun onEvent(event: ActivityEvent) {
@@ -29,21 +37,14 @@ class ActivityViewModel : ViewModel() {
                 }
             }
 
-            ActivityEvent.ActualizarActividad -> cargarActividad()
-        }
-    }
-
-    /**
-     * Carga los movimientos de prueba del registro de actividad.
-     */
-    private fun cargarActividad() {
-        val actividades = obtenerActividadFalsa()
-
-        _uiState.update {
-            it.copy(
-                actividades = actividades,
-                isLoading = false
-            )
+            ActivityEvent.ActualizarActividad -> {
+                viewModelScope.launch {
+                    try {
+                        AppGraph.repository.refresh()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
         }
     }
 }

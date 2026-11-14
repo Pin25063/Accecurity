@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hpm.accecurity.core.auth.AuthRepository
 import dev.hpm.accecurity.core.auth.SignInResult
+import dev.hpm.accecurity.core.data.AppGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +47,12 @@ class LoginViewModel(
             _uiState.update { it.copy(isLoading = true, errorMessage = null, session = null) }
             when (val result = authRepository.signIn(email, password)) {
                 is SignInResult.Success -> {
+                    try {
+                        AppGraph.repository.saveSession(result.session)
+                        AppGraph.repository.refresh()
+                    } catch (_: Exception) {
+                        // El login sigue. Las pantallas quedan vacías si Firestore niega la lectura.
+                    }
                     _uiState.update {
                         it.copy(isLoading = false, session = result.session)
                     }

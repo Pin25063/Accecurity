@@ -1,14 +1,14 @@
 package dev.hpm.accecurity.feature.pases
 
 import androidx.lifecycle.ViewModel
-import dev.hpm.accecurity.core.data.obtenerPasesFalsos
+import androidx.lifecycle.viewModelScope
+import dev.hpm.accecurity.core.data.AppGraph
 import dev.hpm.accecurity.core.model.PaseData
-import dev.hpm.accecurity.core.ui.theme.StatusExpected
-import dev.hpm.accecurity.core.ui.theme.StatusExpectedContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel para gestionar el estado y eventos de Pases bajo arquitectura MVI.
@@ -18,7 +18,20 @@ class PasesViewModel : ViewModel() {
     val uiState: StateFlow<PasesState> = _uiState.asStateFlow()
 
     init {
-        cargarPases()
+        viewModelScope.launch {
+            AppGraph.repository.observePasses().collect { pases ->
+                _uiState.update { state ->
+                    state.copy(
+                        pases = pases,
+                        pasesFiltrados = filtrarPases(pases, state.filtroSeleccionado),
+                        totalEsperados = pases.count { it.estado == "Esperado" },
+                        totalAdentro = pases.count { it.estado == "Dentro" },
+                        totalSalieron = pases.count { it.estado == "Salió" },
+                        isLoading = false
+                    )
+                }
+            }
+        }
     }
 
     fun onEvent(event: PasesEvent) {
@@ -103,28 +116,7 @@ class PasesViewModel : ViewModel() {
     }
 
     /**
-     * Carga los pases de prueba y calcula las estadísticas del listado completo.
-     */
-    private fun cargarPases() {
-        val pases = obtenerPasesFalsos()
-
-        _uiState.update { state ->
-            state.copy(
-                pases = pases,
-                pasesFiltrados = filtrarPases(
-                    pases = pases,
-                    filtro = state.filtroSeleccionado
-                ),
-                totalEsperados = pases.count { it.estado == "Esperado" },
-                totalAdentro = pases.count { it.estado == "Dentro" },
-                totalSalieron = pases.count { it.estado == "Salió" },
-                isLoading = false
-            )
-        }
-    }
-
-    /**
-     * Valida los campos y agrega un pase esperado al listado de la pantalla.
+     * Valida los campos y guarda un pase esperado en Firestore.
      */
     private fun guardarPase() {
         val state = _uiState.value
@@ -151,36 +143,21 @@ class PasesViewModel : ViewModel() {
             return
         }
 
-        val iniciales = nombre.split(Regex("\\s+"))
-            .take(2)
-            .joinToString("") { it.first().uppercaseChar().toString() }
-
-        val nuevoPase = PaseData(
-            iniciales = iniciales,
-            nombre = nombre,
-            descripcion = descripcion,
-            estado = "Esperado",
-            hora = hora,
-            colorEstado = StatusExpectedContainer,
-            colorPunto = StatusExpected
-        )
-
-        _uiState.update { actual ->
-            val pases = listOf(nuevoPase) + actual.pases
-
-            actual.copy(
-                pases = pases,
-                pasesFiltrados = pases,
-                filtroSeleccionado = "Todos",
-                totalEsperados = pases.count { it.estado == "Esperado" },
-                totalAdentro = pases.count { it.estado == "Dentro" },
-                totalSalieron = pases.count { it.estado == "Salió" },
-                mostrarFormulario = false,
-                nombreVisitante = "",
-                descripcionVisita = "",
-                horaVisita = "",
-                errorFormulario = null
-            )
+        viewModelScope.launch {
+            val saved = AppGraph.repository.createExpectedPass(nombre, descripcion, hora)
+            _uiState.update { actual ->
+                if (!saved) {
+                    actual.copy(errorFormulario = "No se pudo guardar el pase.")
+                } else {
+                    actual.copy(
+                        mostrarFormulario = false,
+                        nombreVisitante = "",
+                        descripcionVisita = "",
+                        horaVisita = "",
+                        errorFormulario = null
+                    )
+                }
+            }
         }
     }
 

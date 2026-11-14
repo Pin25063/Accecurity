@@ -1,11 +1,13 @@
 package dev.hpm.accecurity.feature.registro
 
 import androidx.lifecycle.ViewModel
-import dev.hpm.accecurity.core.data.obtenerRegistroGaritaFalso
+import androidx.lifecycle.viewModelScope
+import dev.hpm.accecurity.core.data.AppGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel para gestionar el estado y eventos del Registro de garita bajo arquitectura MVI.
@@ -15,26 +17,25 @@ class RegistroViewModel : ViewModel() {
     val uiState: StateFlow<RegistroState> = _uiState.asStateFlow()
 
     init {
-        cargarRegistro()
+        viewModelScope.launch {
+            AppGraph.repository.observeMovements().collect { movimientos ->
+                _uiState.update {
+                    it.copy(movimientos = movimientos, isLoading = false)
+                }
+            }
+        }
     }
 
     fun onEvent(event: RegistroEvent) {
         when (event) {
-            RegistroEvent.ActualizarRegistro -> cargarRegistro()
-        }
-    }
-
-    /**
-     * Carga los movimientos de prueba del registro de garita.
-     */
-    private fun cargarRegistro() {
-        val movimientos = obtenerRegistroGaritaFalso()
-
-        _uiState.update {
-            it.copy(
-                movimientos = movimientos,
-                isLoading = false
-            )
+            RegistroEvent.ActualizarRegistro -> {
+                viewModelScope.launch {
+                    try {
+                        AppGraph.repository.refresh()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
         }
     }
 }

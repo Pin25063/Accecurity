@@ -27,7 +27,7 @@ class UserRoleRepository(
                 return AssignedRoleResult.MissingDocument
             }
 
-            val role = snapshot.getString(ROLE_FIELD)
+            val role = (snapshot.getString("role") ?: snapshot.getString(ROLE_FIELD))
                 ?.lowercase()
                 ?.trim()
 

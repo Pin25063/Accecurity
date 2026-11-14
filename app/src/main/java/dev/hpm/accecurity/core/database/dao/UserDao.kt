@@ -1,0 +1,17 @@
+package dev.hpm.accecurity.core.database.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import dev.hpm.accecurity.core.database.entity.UserEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface UserDao {
+    @Query("SELECT * FROM users WHERE id = :id LIMIT 1")
+    fun observeById(id: String): Flow<UserEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(user: UserEntity)
+}

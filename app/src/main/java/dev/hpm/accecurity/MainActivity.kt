@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import dev.hpm.accecurity.appnavhost.AppNavHost
+import dev.hpm.accecurity.core.data.AppGraph
 import dev.hpm.accecurity.core.ui.theme.ProyectoTheme
 
 /**
@@ -18,6 +19,7 @@ import dev.hpm.accecurity.core.ui.theme.ProyectoTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppGraph.init(this)
         enableEdgeToEdge()
         setContent {
             ProyectoTheme {

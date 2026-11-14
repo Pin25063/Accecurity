@@ -1,11 +1,13 @@
 package dev.hpm.accecurity.feature.inside
 
 import androidx.lifecycle.ViewModel
-import dev.hpm.accecurity.core.data.obtenerPersonasAdentroFalsas
+import androidx.lifecycle.viewModelScope
+import dev.hpm.accecurity.core.data.AppGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel para gestionar el estado y eventos de personas Adentro bajo arquitectura MVI.
@@ -15,7 +17,17 @@ class InsideViewModel : ViewModel() {
     val uiState: StateFlow<InsideState> = _uiState.asStateFlow()
 
     init {
-        cargarPersonasAdentro()
+        viewModelScope.launch {
+            AppGraph.repository.observeInside().collect { personas ->
+                _uiState.update {
+                    it.copy(
+                        personas = personas,
+                        totalAdentro = personas.size,
+                        isLoading = false
+                    )
+                }
+            }
+        }
     }
 
     fun onEvent(event: InsideEvent) {
@@ -28,22 +40,14 @@ class InsideViewModel : ViewModel() {
                 }
             }
 
-            InsideEvent.RefrescarPersonasAdentro -> cargarPersonasAdentro()
-        }
-    }
-
-    /**
-     * Carga los visitantes de prueba y calcula el total de personas adentro.
-     */
-    private fun cargarPersonasAdentro() {
-        val personas = obtenerPersonasAdentroFalsas()
-
-        _uiState.update {
-            it.copy(
-                personas = personas,
-                totalAdentro = personas.size,
-                isLoading = false
-            )
+            InsideEvent.RefrescarPersonasAdentro -> {
+                viewModelScope.launch {
+                    try {
+                        AppGraph.repository.refresh()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
         }
     }
 }

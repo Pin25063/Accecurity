@@ -1,11 +1,13 @@
 package dev.hpm.accecurity.feature.solicitudes
 
 import androidx.lifecycle.ViewModel
-import dev.hpm.accecurity.core.data.obtenerSolicitudesFalsas
+import androidx.lifecycle.viewModelScope
+import dev.hpm.accecurity.core.data.AppGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel para gestionar el estado y eventos de Solicitudes bajo arquitectura MVI.
@@ -15,7 +17,18 @@ class SolicitudesViewModel : ViewModel() {
     val uiState: StateFlow<SolicitudesState> = _uiState.asStateFlow()
 
     init {
-        cargarSolicitudes()
+        viewModelScope.launch {
+            AppGraph.repository.observePending().collect { solicitudes ->
+                val ordered = solicitudes.sortedByDescending { it.esUrgente }
+                _uiState.update {
+                    it.copy(
+                        solicitudes = ordered,
+                        pendientes = ordered.size,
+                        isLoading = false
+                    )
+                }
+            }
+        }
     }
 
     fun onEvent(event: SolicitudesEvent) {
@@ -31,50 +44,26 @@ class SolicitudesViewModel : ViewModel() {
     }
 
     /**
-     * Carga las solicitudes de prueba y calcula la cantidad de pendientes.
-     */
-    private fun cargarSolicitudes() {
-        val solicitudes = obtenerSolicitudesFalsas()
-            .sortedByDescending { it.esUrgente }
-
-        _uiState.update { state ->
-            state.copy(
-                solicitudes = solicitudes,
-                pendientes = solicitudes.size,
-                isLoading = false
-            )
-        }
-    }
-
-    /**
-     * Registra la decisión y actualiza el listado de solicitudes pendientes.
+     * Cambia el estado del pase en Firestore. La lista se actualiza desde Room.
      */
     private fun procesarSolicitud(id: String, aprobada: Boolean) {
-        _uiState.update { state ->
-            val solicitud = state.solicitudes.find { it.id == id }
-                ?: return@update state
-
-            val pendientes = state.solicitudes.filterNot { it.id == id }
-
-            state.copy(
-                solicitudes = pendientes,
-                solicitudesAprobadas = if (aprobada) {
-                    state.solicitudesAprobadas + solicitud
-                } else {
-                    state.solicitudesAprobadas
-                },
-                solicitudesRechazadas = if (aprobada) {
-                    state.solicitudesRechazadas
-                } else {
-                    state.solicitudesRechazadas + solicitud
-                },
-                pendientes = pendientes.size,
-                mensaje = if (aprobada) {
-                    "Solicitud de ${solicitud.nombre} aprobada."
-                } else {
-                    "Solicitud de ${solicitud.nombre} rechazada."
-                }
+        val solicitud = _uiState.value.solicitudes.find { it.id == id } ?: return
+        viewModelScope.launch {
+            val saved = AppGraph.repository.updatePassStatus(
+                passId = id,
+                status = if (aprobada) "EXPECTED" else "REJECTED"
             )
+            _uiState.update {
+                it.copy(
+                    mensaje = if (!saved) {
+                        "No se pudo actualizar la solicitud."
+                    } else if (aprobada) {
+                        "Solicitud de ${solicitud.nombre} aprobada."
+                    } else {
+                        "Solicitud de ${solicitud.nombre} rechazada."
+                    }
+                )
+            }
         }
     }
 }
