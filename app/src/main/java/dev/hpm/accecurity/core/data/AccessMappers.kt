@@ -17,7 +17,11 @@ import androidx.compose.ui.graphics.Color
 
 fun PassEntity.toPaseData(): PaseData {
     val (label, container, dot) = statusColors(status)
-    val time = entryTime.ifBlank { exitTime.ifBlank { schedule } }
+    val time = if (status == "LEFT") {
+        exitTime.ifBlank { entryTime.ifBlank { schedule } }
+    } else {
+        entryTime.ifBlank { schedule }
+    }
     return PaseData(
         iniciales = initialsOf(visitorName),
         nombre = visitorName,

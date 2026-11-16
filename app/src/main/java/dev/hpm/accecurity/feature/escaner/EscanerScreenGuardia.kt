@@ -41,6 +41,7 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import dev.hpm.accecurity.core.ui.components.escaner.RegistroSalidaDialog
 import dev.hpm.accecurity.core.ui.components.escaner.ResultadoEscaneoDialog
 import dev.hpm.accecurity.core.ui.components.escaner.BadgeEnLinea
 import dev.hpm.accecurity.core.ui.components.escaner.MarcoEscanerOverlay
@@ -58,7 +59,6 @@ fun EscanerScreenGuardia(
     onEscanerClick: () -> Unit = {},
     onRegistroClick: () -> Unit = {},
     onPerfilClick: () -> Unit = {},
-    onRegistrarSalidaClick: () -> Unit = {},
     viewModel: EscanerViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -236,6 +236,25 @@ fun EscanerScreenGuardia(
         )
     }
 
+    if (state.mostrarSalida) {
+        RegistroSalidaDialog(
+            personas = state.personasAdentro,
+            busqueda = state.busquedaSalida,
+            seleccionada = state.personaSalidaSeleccionada,
+            cargando = state.cargandoSalidas,
+            registrando = state.registrandoSalida,
+            errorLista = state.errorListaSalida,
+            mensaje = state.mensajeSalida,
+            salidaRegistrada = state.salidaRegistrada,
+            onBuscar = { viewModel.onEvent(EscanerEvent.CambiarBusquedaSalida(it)) },
+            onSeleccionar = { viewModel.onEvent(EscanerEvent.SeleccionarPersonaSalida(it)) },
+            onReintentar = { viewModel.onEvent(EscanerEvent.ActualizarListaSalida) },
+            onVolver = { viewModel.onEvent(EscanerEvent.VolverListaSalida) },
+            onConfirmar = { viewModel.onEvent(EscanerEvent.ConfirmarSalida) },
+            onCerrar = { viewModel.onEvent(EscanerEvent.CerrarRegistroSalida) }
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -342,7 +361,7 @@ fun EscanerScreenGuardia(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
-                    enabled = !state.consultaEnCurso && !state.registroEnCurso && !state.mostrarResultado,
+                    enabled = !state.consultaEnCurso && !state.registroEnCurso && !state.mostrarResultado && !state.mostrarSalida,
                     onClick = {
                         if (!tienePermisoCamara) {
                             permisoLauncher.launch(Manifest.permission.CAMERA)
@@ -381,7 +400,8 @@ fun EscanerScreenGuardia(
                 }
 
                 OutlinedButton(
-                    onClick = onRegistrarSalidaClick,
+                    enabled = !state.consultaEnCurso && !state.registroEnCurso && !state.mostrarResultado && !state.mostrarSalida,
+                    onClick = { viewModel.onEvent(EscanerEvent.AbrirRegistroSalida) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

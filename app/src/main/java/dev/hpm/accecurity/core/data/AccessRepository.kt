@@ -19,6 +19,8 @@ import dev.hpm.accecurity.core.model.PaseData
 import dev.hpm.accecurity.core.model.PersonaAdentroData
 import dev.hpm.accecurity.core.model.SolicitudData
 import dev.hpm.accecurity.core.model.PassLookupResult
+import dev.hpm.accecurity.core.model.RegisterExitResult
+import dev.hpm.accecurity.core.model.validatePassExit
 import dev.hpm.accecurity.core.model.RegisterEntryResult
 import dev.hpm.accecurity.core.model.validatePassEntry
 import java.time.LocalDateTime
@@ -249,7 +251,7 @@ class AccessRepository(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            PassLookupResult.Invalid(entryErrorMessage(error))
+            PassLookupResult.Invalid(accessErrorMessage(error))
         }
     }
 
@@ -267,12 +269,12 @@ class AccessRepository(
         try {
             val recorded = firestore.runTransaction { transaction ->
                 val role = transaction.get(firestore.collection("users").document(userId))
-                if (!role.isGuard()) throw EntryDeniedException("Solo el guardia puede registrar entradas.")
+                if (!role.isGuard()) throw AccessDeniedException("Solo el guardia puede registrar entradas.")
                 val snapshot = transaction.get(passRef)
-                if (!snapshot.exists()) throw EntryDeniedException("El pase ya no existe.")
+                if (!snapshot.exists()) throw AccessDeniedException("El pase ya no existe.")
                 val pass = snapshot.toPassEntity()
                 val now = LocalDateTime.now()
-                validatePassEntry(pass.toScannedPass(), code, now)?.let { throw EntryDeniedException(it) }
+                validatePassEntry(pass.toScannedPass(), code, now)?.let { throw AccessDeniedException(it) }
                 val time = now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
                 val movement = MovementEntity(
                     id = movementRef.id,
@@ -295,27 +297,99 @@ class AccessRepository(
                     "type" to movement.type,
                     "registeredBy" to userId
                 ))
-                RecordedEntry(pass.copy(status = "INSIDE", entryTime = time), movement)
+                RecordedAccess(pass.copy(status = "INSIDE", entryTime = time), movement)
             }.await()
 
-            // La escritura remota ya terminó: una falla de caché no debe pedir repetir el ingreso.
-            try {
-                syncMutex.withLock {
-                    database.withTransaction {
-                        database.passDao().upsertAll(listOf(recorded.pass))
-                        database.movementDao().upsertAll(listOf(recorded.movement))
-                    }
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                Log.w("AccessRepository", "Entrada guardada; caché pendiente de sincronización.", error)
-            }
+            cacheRecordedAccess(recorded)
             RegisterEntryResult.Success(recorded.pass.visitorName, recorded.pass.entryTime)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            RegisterEntryResult.Failure(entryErrorMessage(error))
+            RegisterEntryResult.Failure(accessErrorMessage(error))
+        }
+    }
+
+    /** Actualiza los pases antes de ofrecer la lista de personas adentro. */
+    suspend fun refreshPassesForExit(): String? = withContext(Dispatchers.IO) {
+        if (auth.currentUser == null) return@withContext "Iniciá sesión nuevamente."
+        try {
+            val passes = firestore.collection("pases").get(Source.SERVER).await().documents.map {
+                it.toPassEntity()
+            }
+            syncMutex.withLock { database.passDao().replaceAll(passes) }
+            null
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            accessErrorMessage(error, "Tocá Reintentar para cargar la lista.")
+        }
+    }
+
+    /** Confirma que sigue adentro y guarda la salida y su movimiento de forma atómica. */
+    suspend fun registerExit(passId: String): RegisterExitResult = withContext(Dispatchers.IO) {
+        if (!isSupportedPassCode(passId)) {
+            return@withContext RegisterExitResult.Failure("No se pudo identificar el pase seleccionado.")
+        }
+        val userId = auth.currentUser?.uid
+            ?: return@withContext RegisterExitResult.Failure("Iniciá sesión nuevamente.")
+        val passRef = firestore.collection("pases").document(passId)
+        val movementRef = firestore.collection("movimientos").document("salida_$passId")
+        try {
+            val recorded = firestore.runTransaction { transaction ->
+                val role = transaction.get(firestore.collection("users").document(userId))
+                if (!role.isGuard()) throw AccessDeniedException("Solo el guardia puede registrar salidas.")
+                val snapshot = transaction.get(passRef)
+                if (!snapshot.exists()) throw AccessDeniedException("El pase ya no existe.")
+                val pass = snapshot.toPassEntity()
+                validatePassExit(pass.status, pass.entryTime, pass.exitTime)?.let {
+                    throw AccessDeniedException(it)
+                }
+                val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+                val movement = MovementEntity(
+                    id = movementRef.id,
+                    passId = pass.id,
+                    title = "Salida registrada",
+                    description = "${pass.visitorName} · ${pass.location.ifBlank { "Sin destino" }}",
+                    time = time,
+                    type = "EXIT"
+                )
+                transaction.update(passRef, mapOf(
+                    "status" to "LEFT",
+                    "exitTime" to time,
+                    "exitRegisteredBy" to userId
+                ))
+                transaction.set(movementRef, mapOf(
+                    "passId" to movement.passId,
+                    "title" to movement.title,
+                    "description" to movement.description,
+                    "time" to movement.time,
+                    "type" to movement.type,
+                    "registeredBy" to userId
+                ))
+                RecordedAccess(pass.copy(status = "LEFT", exitTime = time), movement)
+            }.await()
+            cacheRecordedAccess(recorded)
+            RegisterExitResult.Success(recorded.pass.visitorName, recorded.pass.exitTime)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            RegisterExitResult.Failure(accessErrorMessage(error, "Volvé a cargar la lista antes de reintentar."))
+        }
+    }
+
+    private suspend fun cacheRecordedAccess(recorded: RecordedAccess) {
+        // La operación ya está en Firebase: un error local no debe sugerir registrarla otra vez.
+        try {
+            syncMutex.withLock {
+                database.withTransaction {
+                    database.passDao().upsertAll(listOf(recorded.pass))
+                    database.movementDao().upsertAll(listOf(recorded.movement))
+                }
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Log.w("AccessRepository", "Movimiento guardado; caché pendiente de sincronización.", error)
         }
     }
 
@@ -327,21 +401,21 @@ class AccessRepository(
         return code.isNotBlank() && code.length <= 128 && '/' !in code && code != "." && code != ".."
     }
 
-    private fun entryErrorMessage(error: Exception): String {
+    private fun accessErrorMessage(error: Exception, retryHint: String = "Volvé a escanear el pase."): String {
         val causes = generateSequence<Throwable>(error) { it.cause }.take(8).toList()
-        causes.filterIsInstance<EntryDeniedException>().firstOrNull()?.let { return it.message.orEmpty() }
+        causes.filterIsInstance<AccessDeniedException>().firstOrNull()?.let { return it.message.orEmpty() }
         return when (causes.filterIsInstance<FirebaseFirestoreException>().firstOrNull()?.code) {
             FirebaseFirestoreException.Code.PERMISSION_DENIED ->
                 "Firebase no permitió la operación. Revisá los permisos de la cuenta de guardia."
             FirebaseFirestoreException.Code.UNAVAILABLE,
             FirebaseFirestoreException.Code.DEADLINE_EXCEEDED ->
-                "No se pudo confirmar con el servidor. Revisá internet y volvé a escanear."
-            else -> "No se pudo completar la operación. Volvé a escanear el pase."
+                "No se pudo confirmar con el servidor. Revisá internet. $retryHint"
+            else -> "No se pudo completar la operación. $retryHint"
         }
     }
 
-    private data class RecordedEntry(val pass: PassEntity, val movement: MovementEntity)
-    private class EntryDeniedException(message: String) : Exception(message)
+    private data class RecordedAccess(val pass: PassEntity, val movement: MovementEntity)
+    private class AccessDeniedException(message: String) : Exception(message)
 
     /**
      * El jefe autoriza (EXPECTED) o rechaza (REJECTED) una solicitud pendiente.
