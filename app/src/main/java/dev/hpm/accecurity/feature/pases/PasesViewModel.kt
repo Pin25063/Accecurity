@@ -26,6 +26,10 @@ class PasesViewModel : ViewModel() {
                 _uiState.update { state ->
                     state.copy(
                         pases = pases,
+                        // El detalle debe reflejar cambios de estado mientras está abierto.
+                        paseSeleccionado = state.paseSeleccionado?.let { seleccionado ->
+                            pases.find { it.id == seleccionado.id }
+                        },
                         pasesFiltrados = filtrarPases(pases, state.filtroSeleccionado),
                         totalEsperados = pases.count { it.estado == "Esperado" },
                         totalAdentro = pases.count { it.estado == "Dentro" },

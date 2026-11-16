@@ -28,7 +28,10 @@ fun PassEntity.toPaseData(): PaseData {
         fechaVisita = visitDate,
         horarioAutorizado = displayVisitWindow(visitDate, startTime, endTime, schedule),
         ubicacion = location,
-        solicitadoPor = requestedBy
+        solicitadoPor = requestedBy,
+        id = id,
+        codigoQr = qrCode.ifBlank { id },
+        estadoAcceso = status
     )
 }
 
