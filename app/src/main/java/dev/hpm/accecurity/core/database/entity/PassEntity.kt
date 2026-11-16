@@ -16,5 +16,8 @@ data class PassEntity(
     val isUrgent: Boolean,
     val qrCode: String,
     val entryTime: String,
-    val exitTime: String
+    val exitTime: String,
+    @androidx.room.ColumnInfo(defaultValue = "''") val visitDate: String = "",
+    @androidx.room.ColumnInfo(defaultValue = "''") val startTime: String = "",
+    @androidx.room.ColumnInfo(defaultValue = "''") val endTime: String = ""
 )

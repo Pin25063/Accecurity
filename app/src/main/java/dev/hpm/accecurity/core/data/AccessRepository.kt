@@ -9,6 +9,8 @@ import dev.hpm.accecurity.core.database.entity.MovementEntity
 import dev.hpm.accecurity.core.database.entity.PassEntity
 import dev.hpm.accecurity.core.database.entity.UserEntity
 import dev.hpm.accecurity.core.model.ActividadData
+import dev.hpm.accecurity.core.model.displayVisitWindow
+import dev.hpm.accecurity.core.model.validateVisitWindow
 import dev.hpm.accecurity.core.model.PaseData
 import dev.hpm.accecurity.core.model.PersonaAdentroData
 import dev.hpm.accecurity.core.model.SolicitudData
@@ -136,25 +138,39 @@ class AccessRepository(
             isUrgent = bool("isUrgent", "esUrgente"),
             qrCode = string("qrCode", "codigoQr"),
             entryTime = string("entryTime", "horaEntrada"),
-            exitTime = string("exitTime", "horaSalida")
+            exitTime = string("exitTime", "horaSalida"),
+            visitDate = string("visitDate", "fechaVisita"),
+            startTime = string("startTime", "horaInicio"),
+            endTime = string("endTime", "horaFin")
         )
     }
 
     /**
      * Crea la solicitud en pendiente. El jefe la autoriza después.
      */
-    suspend fun createAccessRequest(name: String, description: String, time: String): Boolean {
+    suspend fun createAccessRequest(
+        name: String, description: String, date: String, start: String, end: String, location: String
+    ): Boolean {
+        if (name.isBlank() || description.isBlank() || location.isBlank() || validateVisitWindow(date, start, end) != null) {
+            return false
+        }
         return withContext(Dispatchers.IO) {
             try {
+                val user = auth.currentUser ?: return@withContext false
+                val requesterEmail = user.email?.trim().orEmpty()
+                if (requesterEmail.isBlank()) return@withContext false
                 val passRef = firestore.collection("pases").document()
                 passRef.set(
                     mapOf(
                         "visitorName" to name,
                         "description" to description,
-                        "schedule" to time,
-                        "location" to "",
-                        "requestedBy" to "",
-                        "createdById" to (auth.currentUser?.uid ?: ""),
+                        "schedule" to displayVisitWindow(date, start, end, ""),
+                        "visitDate" to date,
+                        "startTime" to start,
+                        "endTime" to end,
+                        "location" to location.trim(),
+                        "requestedBy" to requesterEmail,
+                        "createdById" to user.uid,
                         "status" to "PENDING",
                         "isUrgent" to false,
                         "qrCode" to passRef.id,
@@ -167,7 +183,9 @@ class AccessRepository(
                         "passId" to passRef.id,
                         "title" to "Solicitud de acceso",
                         "description" to "Para $name",
-                        "time" to time,
+                        "time" to java.time.LocalDateTime.now().format(
+                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                        ),
                         "type" to "PASS_CREATED"
                     )
                 ).await()

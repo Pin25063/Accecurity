@@ -70,11 +70,13 @@ fun SolicitudItem(
         )
         DetalleSolicitudFila(
             icono = Icons.Outlined.LocationOn,
-            texto = solicitud.ubicacion
+            texto = solicitud.ubicacion.takeIf { it.isNotBlank() }?.let { "Destino: $it" }
+                ?: "Sin destino registrado"
         )
         DetalleSolicitudFila(
             icono = Icons.Outlined.Person,
-            texto = solicitud.solicitadoPor
+            texto = solicitud.solicitadoPor.takeIf { it.isNotBlank() }?.let { "Solicitado por: $it" }
+                ?: "Solicitante no registrado"
         )
 
         Row(

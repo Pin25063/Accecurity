@@ -3,6 +3,7 @@ package dev.hpm.accecurity.feature.pases
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.hpm.accecurity.core.data.AppGraph
+import dev.hpm.accecurity.core.model.validateVisitWindow
 import dev.hpm.accecurity.core.model.PaseData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +57,10 @@ class PasesViewModel : ViewModel() {
                         mostrarFormulario = true,
                         nombreVisitante = "",
                         descripcionVisita = "",
+                        destinoVisita = "",
                         horaVisita = "",
+                        fechaVisita = "",
+                        horaFinVisita = "",
                         errorFormulario = null,
                         mensaje = null
                     )
@@ -69,7 +73,10 @@ class PasesViewModel : ViewModel() {
                         mostrarFormulario = false,
                         nombreVisitante = "",
                         descripcionVisita = "",
+                        destinoVisita = "",
                         horaVisita = "",
+                        fechaVisita = "",
+                        horaFinVisita = "",
                         errorFormulario = null
                     )
                 }
@@ -93,6 +100,10 @@ class PasesViewModel : ViewModel() {
                 }
             }
 
+            is PasesEvent.CambiarDestino -> {
+                _uiState.update { it.copy(destinoVisita = event.destino, errorFormulario = null) }
+            }
+
             is PasesEvent.CambiarHora -> {
                 _uiState.update {
                     it.copy(
@@ -100,6 +111,13 @@ class PasesViewModel : ViewModel() {
                         errorFormulario = null
                     )
                 }
+            }
+
+            is PasesEvent.CambiarFecha -> {
+                _uiState.update { it.copy(fechaVisita = event.fecha, errorFormulario = null) }
+            }
+            is PasesEvent.CambiarHoraFin -> {
+                _uiState.update { it.copy(horaFinVisita = event.hora, errorFormulario = null) }
             }
 
             is PasesEvent.VerDetalle -> {
@@ -119,7 +137,7 @@ class PasesViewModel : ViewModel() {
     }
 
     /**
-     * Valida los campos y guarda un pase esperado en Firestore.
+     * Valida los campos y envía una solicitud pendiente a Firestore.
      */
     private fun guardarPase() {
         val state = _uiState.value
@@ -128,27 +146,34 @@ class PasesViewModel : ViewModel() {
 
         val nombre = state.nombreVisitante.trim()
         val descripcion = state.descripcionVisita.trim()
+        val destino = state.destinoVisita.trim()
         val hora = state.horaVisita.trim()
+        val fecha = state.fechaVisita.trim()
+        val horaFin = state.horaFinVisita.trim()
 
-        if (nombre.isBlank() || descripcion.isBlank() || hora.isBlank()) {
+        if (nombre.isBlank() || descripcion.isBlank() || destino.isBlank() || fecha.isBlank() || hora.isBlank() || horaFin.isBlank()) {
             _uiState.update {
                 it.copy(errorFormulario = "Completa todos los campos.")
             }
             return
         }
 
-        if (!Regex("([01][0-9]|2[0-3]):[0-5][0-9]").matches(hora)) {
-            _uiState.update {
-                it.copy(
-                    errorFormulario = "Ingresa una hora válida en formato HH:mm."
-                )
-            }
+        val errorHorario = validateVisitWindow(fecha, hora, horaFin)
+        if (errorHorario != null) {
+            _uiState.update { it.copy(errorFormulario = errorHorario) }
             return
         }
 
         _uiState.update { it.copy(guardando = true, errorFormulario = null) }
         viewModelScope.launch(Dispatchers.IO) {
-            val saved = AppGraph.repository.createAccessRequest(nombre, descripcion, hora)
+            val saved = AppGraph.repository.createAccessRequest(
+                name = nombre,
+                description = descripcion,
+                date = fecha,
+                start = hora,
+                end = horaFin,
+                location = destino
+            )
             withContext(Dispatchers.Main) {
                 _uiState.update { actual ->
                     if (!saved) {
@@ -162,7 +187,10 @@ class PasesViewModel : ViewModel() {
                             mostrarFormulario = false,
                             nombreVisitante = "",
                             descripcionVisita = "",
+                            destinoVisita = "",
                             horaVisita = "",
+                            fechaVisita = "",
+                            horaFinVisita = "",
                             errorFormulario = null,
                             mensaje = "Solicitud de $nombre enviada. El jefe debe autorizarla."
                         )

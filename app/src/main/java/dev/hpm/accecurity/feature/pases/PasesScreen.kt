@@ -1,5 +1,9 @@
 package dev.hpm.accecurity.feature.pases
 
+import android.app.DatePickerDialog
+import androidx.compose.ui.platform.LocalContext
+import dev.hpm.accecurity.core.model.displayVisitDate
+import java.time.LocalDate
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +13,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -295,6 +304,7 @@ private fun CrearPaseDialog(
     state: PasesState,
     onEvent: (PasesEvent) -> Unit
 ) {
+    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = {
             if (!state.guardando) onEvent(PasesEvent.CancelarCreacion)
@@ -309,6 +319,7 @@ private fun CrearPaseDialog(
             ) {
                 OutlinedTextField(
                     value = state.nombreVisitante,
+                    enabled = !state.guardando,
                     onValueChange = {
                         onEvent(PasesEvent.CambiarNombre(it))
                     },
@@ -321,11 +332,12 @@ private fun CrearPaseDialog(
 
                 OutlinedTextField(
                     value = state.descripcionVisita,
+                    enabled = !state.guardando,
                     onValueChange = {
                         onEvent(PasesEvent.CambiarDescripcion(it))
                     },
                     label = {
-                        Text(text = "Motivo y destino de la visita")
+                        Text(text = "Motivo de la visita")
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
@@ -333,19 +345,42 @@ private fun CrearPaseDialog(
                 )
 
                 OutlinedTextField(
-                    value = state.horaVisita,
-                    onValueChange = {
-                        onEvent(PasesEvent.CambiarHora(it))
-                    },
-                    label = {
-                        Text(text = "Hora de la visita")
-                    },
-                    supportingText = {
-                        Text(text = "Formato de 24 horas. Ejemplo: 14:30")
-                    },
+                    value = state.destinoVisita,
+                    enabled = !state.guardando,
+                    onValueChange = { onEvent(PasesEvent.CambiarDestino(it)) },
+                    label = { Text("Destino de la visita") },
+                    placeholder = { Text("Ej. Secretaría, Dirección, Bodega") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
+
+                OutlinedButton(
+                    enabled = !state.guardando,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val fecha = runCatching { LocalDate.parse(state.fechaVisita) }
+                            .getOrDefault(LocalDate.now())
+                        DatePickerDialog(context, { _, year, month, day ->
+                            onEvent(PasesEvent.CambiarFecha(LocalDate.of(year, month + 1, day).toString()))
+                        }, fecha.year, fecha.monthValue - 1, fecha.dayOfMonth).show()
+                    }
+                ) {
+                    Text(if (state.fechaVisita.isBlank()) "Seleccionar fecha de visita"
+                    else "Fecha: ${displayVisitDate(state.fechaVisita)}")
+                }
+                SelectorHoraIngreso(
+                    titulo = "Ingreso desde",
+                    valor = state.horaVisita,
+                    habilitado = !state.guardando,
+                    onValueChange = { onEvent(PasesEvent.CambiarHora(it)) }
+                )
+                SelectorHoraIngreso(
+                    titulo = "Ingreso hasta",
+                    valor = state.horaFinVisita,
+                    habilitado = !state.guardando,
+                    onValueChange = { onEvent(PasesEvent.CambiarHoraFin(it)) }
+                )
+                Text("Horario permitido para ingresar, dentro del mismo día.")
 
                 state.errorFormulario?.let { mensaje ->
                     Text(
@@ -377,6 +412,106 @@ private fun CrearPaseDialog(
             }
         }
     )
+}
+
+/** Selección de hora en cajas desplegables, sin abrir el reloj del sistema. */
+@Composable
+private fun SelectorHoraIngreso(
+    titulo: String,
+    valor: String,
+    habilitado: Boolean,
+    onValueChange: (String) -> Unit
+) {
+    // Conserva selecciones parciales hasta completar hora y minutos.
+    var hora by rememberSaveable(valor) {
+        mutableStateOf(valor.substringBefore(":", ""))
+    }
+    var minutos by rememberSaveable(valor) {
+        mutableStateOf(valor.substringAfter(":", ""))
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(text = titulo, style = MaterialTheme.typography.labelLarge)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SelectorNumeroHorario(
+                etiqueta = "Hora (24 h)",
+                valor = hora,
+                opciones = listOf(7,8,9,10,11,12,13,14,15,16,17),
+                habilitado = habilitado,
+                modifier = Modifier.weight(1f),
+                onSeleccionar = {
+                    hora = it
+                    if (minutos.isNotBlank()) onValueChange("$it:$minutos")
+                }
+            )
+            Text(":", style = MaterialTheme.typography.titleLarge)
+            SelectorNumeroHorario(
+                etiqueta = "Minutos",
+                valor = minutos,
+                opciones = listOf(0, 15, 30, 45),
+                habilitado = habilitado,
+                modifier = Modifier.weight(1f),
+                onSeleccionar = {
+                    minutos = it
+                    if (hora.isNotBlank()) onValueChange("$hora:$it")
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectorNumeroHorario(
+    etiqueta: String,
+    valor: String,
+    opciones: List<Int>,
+    habilitado: Boolean,
+    modifier: Modifier = Modifier,
+    onSeleccionar: (String) -> Unit
+) {
+    var expandido by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = etiqueta,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Box {
+            OutlinedButton(
+                onClick = { expandido = true },
+                enabled = habilitado,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
+            ) {
+                Text(
+                    text = "${valor.ifBlank { "--" }} ▾",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            DropdownMenu(
+                expanded = expandido && habilitado,
+                onDismissRequest = { expandido = false },
+                modifier = Modifier.heightIn(max = 224.dp).widthIn(min = 96.dp)
+            ) {
+                opciones.forEach { numero ->
+                    val texto = numero.toString().padStart(2, '0')
+                    DropdownMenuItem(
+                        text = { Text(texto) },
+                        onClick = {
+                            expandido = false
+                            onSeleccionar(texto)
+                        }
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -415,7 +550,7 @@ private fun DetallePaseDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Motivo y destino",
+                        text = "Motivo de la visita",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -423,6 +558,17 @@ private fun DetallePaseDialog(
                         text = pase.descripcion,
                         style = MaterialTheme.typography.bodyLarge
                     )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Destino", style = MaterialTheme.typography.labelMedium)
+                    Text(pase.ubicacion.ifBlank { "Sin destino registrado" },
+                        style = MaterialTheme.typography.bodyLarge)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Solicitado por", style = MaterialTheme.typography.labelMedium)
+                    Text(pase.solicitadoPor.ifBlank { "Solicitante no registrado" },
+                        style = MaterialTheme.typography.bodyLarge)
                 }
 
                 Column(
@@ -437,6 +583,13 @@ private fun DetallePaseDialog(
                         text = pase.estado,
                         style = MaterialTheme.typography.bodyLarge
                     )
+                }
+
+                if (pase.horarioAutorizado.isNotBlank()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Fecha y horario de ingreso", style = MaterialTheme.typography.labelMedium)
+                        Text(pase.horarioAutorizado, style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
 
                 Column(

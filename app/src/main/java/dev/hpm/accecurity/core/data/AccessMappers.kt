@@ -3,6 +3,7 @@ package dev.hpm.accecurity.core.data
 import dev.hpm.accecurity.core.database.entity.MovementEntity
 import dev.hpm.accecurity.core.database.entity.PassEntity
 import dev.hpm.accecurity.core.model.ActividadData
+import dev.hpm.accecurity.core.model.displayVisitWindow
 import dev.hpm.accecurity.core.model.PaseData
 import dev.hpm.accecurity.core.model.PersonaAdentroData
 import dev.hpm.accecurity.core.model.SolicitudData
@@ -23,7 +24,11 @@ fun PassEntity.toPaseData(): PaseData {
         estado = label,
         hora = time,
         colorEstado = container,
-        colorPunto = dot
+        colorPunto = dot,
+        fechaVisita = visitDate,
+        horarioAutorizado = displayVisitWindow(visitDate, startTime, endTime, schedule),
+        ubicacion = location,
+        solicitadoPor = requestedBy
     )
 }
 
@@ -31,7 +36,7 @@ fun PassEntity.toSolicitud(): SolicitudData = SolicitudData(
     id = id,
     nombre = visitorName,
     descripcion = description,
-    horario = schedule,
+    horario = displayVisitWindow(visitDate, startTime, endTime, schedule),
     ubicacion = location,
     solicitadoPor = requestedBy,
     esUrgente = isUrgent

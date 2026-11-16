@@ -10,7 +10,10 @@ sealed interface PasesEvent {
     data object CancelarCreacion : PasesEvent
     data class CambiarNombre(val nombre: String) : PasesEvent
     data class CambiarDescripcion(val descripcion: String) : PasesEvent
+    data class CambiarDestino(val destino: String) : PasesEvent
     data class CambiarHora(val hora: String) : PasesEvent
+    data class CambiarFecha(val fecha: String) : PasesEvent
+    data class CambiarHoraFin(val hora: String) : PasesEvent
     data object GuardarPase : PasesEvent
     data class VerDetalle(val pase: PaseData) : PasesEvent
     data object CerrarDetalle : PasesEvent

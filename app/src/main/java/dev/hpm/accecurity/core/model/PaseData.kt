@@ -20,5 +20,9 @@ data class PaseData(
     val estado: String,
     val hora: String,
     val colorEstado: Color,
-    val colorPunto: Color
+    val colorPunto: Color,
+    val fechaVisita: String = "",
+    val horarioAutorizado: String = "",
+    val ubicacion: String = "",
+    val solicitadoPor: String = ""
 )

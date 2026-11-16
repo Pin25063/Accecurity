@@ -13,7 +13,7 @@ import dev.hpm.accecurity.core.database.entity.UserEntity
 
 @Database(
     entities = [UserEntity::class, PassEntity::class, MovementEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AccecurityDatabase : RoomDatabase() {
@@ -22,6 +22,15 @@ abstract class AccecurityDatabase : RoomDatabase() {
     abstract fun movementDao(): MovementDao
 
     companion object {
+        // Conserva los pases y usuarios existentes al actualizar la aplicación.
+        private val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE passes ADD COLUMN visitDate TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE passes ADD COLUMN startTime TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE passes ADD COLUMN endTime TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         @Volatile
         private var instance: AccecurityDatabase? = null
 
@@ -31,7 +40,7 @@ abstract class AccecurityDatabase : RoomDatabase() {
                     context.applicationContext,
                     AccecurityDatabase::class.java,
                     "accecurity.db"
-                ).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
             }
         }
     }
