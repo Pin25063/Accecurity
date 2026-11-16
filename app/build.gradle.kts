@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.google.mlkit.barcode.scanning)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation("com.google.zxing:core:3.5.4")
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

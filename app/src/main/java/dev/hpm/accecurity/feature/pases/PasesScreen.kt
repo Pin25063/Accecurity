@@ -31,6 +31,7 @@ import dev.hpm.accecurity.core.ui.components.topbar.TopBarInicioAdminYResidente
 import dev.hpm.accecurity.core.ui.theme.StatusExpectedContainer
 import dev.hpm.accecurity.core.ui.theme.StatusInsideContainer
 import dev.hpm.accecurity.core.model.PaseData
+import dev.hpm.accecurity.core.ui.components.pass.PaseQrSection
 
 /**
  * Pantalla de listado de pases del usuario (admin y residente).
@@ -440,7 +441,7 @@ private fun SelectorHoraIngreso(
             SelectorNumeroHorario(
                 etiqueta = "Hora (24 h)",
                 valor = hora,
-                opciones = listOf(7,8,9,10,11,12,13,14,15,16,17),
+                opciones = listOf(7,8,9,10,11,12,13,14,15,16,17,18),
                 habilitado = habilitado,
                 modifier = Modifier.weight(1f),
                 onSeleccionar = {
@@ -605,6 +606,8 @@ private fun DetallePaseDialog(
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
+
+                PaseQrSection(pase = pase)
             }
         },
         confirmButton = {

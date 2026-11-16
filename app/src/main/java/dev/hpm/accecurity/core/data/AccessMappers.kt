@@ -4,6 +4,7 @@ import dev.hpm.accecurity.core.database.entity.MovementEntity
 import dev.hpm.accecurity.core.database.entity.PassEntity
 import dev.hpm.accecurity.core.model.ActividadData
 import dev.hpm.accecurity.core.model.displayVisitWindow
+import dev.hpm.accecurity.core.model.ScannedPass
 import dev.hpm.accecurity.core.model.PaseData
 import dev.hpm.accecurity.core.model.PersonaAdentroData
 import dev.hpm.accecurity.core.model.SolicitudData
@@ -16,7 +17,11 @@ import androidx.compose.ui.graphics.Color
 
 fun PassEntity.toPaseData(): PaseData {
     val (label, container, dot) = statusColors(status)
-    val time = entryTime.ifBlank { exitTime.ifBlank { schedule } }
+    val time = if (status == "LEFT") {
+        exitTime.ifBlank { entryTime.ifBlank { schedule } }
+    } else {
+        entryTime.ifBlank { schedule }
+    }
     return PaseData(
         iniciales = initialsOf(visitorName),
         nombre = visitorName,
@@ -28,9 +33,26 @@ fun PassEntity.toPaseData(): PaseData {
         fechaVisita = visitDate,
         horarioAutorizado = displayVisitWindow(visitDate, startTime, endTime, schedule),
         ubicacion = location,
-        solicitadoPor = requestedBy
+        solicitadoPor = requestedBy,
+        id = id,
+        codigoQr = qrCode.ifBlank { id },
+        estadoAcceso = status
     )
 }
+
+fun PassEntity.toScannedPass(): ScannedPass = ScannedPass(
+    id = id,
+    visitorName = visitorName,
+    description = description,
+    location = location,
+    requestedBy = requestedBy,
+    visitDate = visitDate,
+    startTime = startTime,
+    endTime = endTime,
+    status = status,
+    qrCode = qrCode,
+    entryTime = entryTime
+)
 
 fun PassEntity.toSolicitud(): SolicitudData = SolicitudData(
     id = id,
@@ -85,7 +107,9 @@ fun normalizeStatus(raw: String?): String {
         "LEFT", "SALIO", "SALIÓ" -> "LEFT"
         "PENDING", "PENDIENTE" -> "PENDING"
         "REJECTED", "RECHAZADO" -> "REJECTED"
-        else -> "EXPECTED"
+        "EXPECTED", "ESPERADO", "APPROVED", "APROBADO" -> "EXPECTED"
+        "EXPIRED", "VENCIDO", "EXPIRADO" -> "EXPIRED"
+        else -> "UNKNOWN"
     }
 }
 

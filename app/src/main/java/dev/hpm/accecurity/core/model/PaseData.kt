@@ -24,5 +24,8 @@ data class PaseData(
     val fechaVisita: String = "",
     val horarioAutorizado: String = "",
     val ubicacion: String = "",
-    val solicitadoPor: String = ""
+    val solicitadoPor: String = "",
+    val id: String = "",
+    val codigoQr: String = "",
+    val estadoAcceso: String = ""
 )
