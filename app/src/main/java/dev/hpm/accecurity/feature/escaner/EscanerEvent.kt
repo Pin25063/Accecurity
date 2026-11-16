@@ -5,6 +5,8 @@ package dev.hpm.accecurity.feature.escaner
  */
 sealed interface EscanerEvent {
     data class CodigoEscaneado(val codigo: String) : EscanerEvent
+    data object ConfirmarEntrada : EscanerEvent
+    data object CerrarResultado : EscanerEvent
     data object ReiniciarEscaner : EscanerEvent
     data class ErrorOcurrido(val mensaje: String) : EscanerEvent
     data object LimpiarMensajes : EscanerEvent

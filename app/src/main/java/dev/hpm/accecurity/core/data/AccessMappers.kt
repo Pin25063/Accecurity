@@ -4,6 +4,7 @@ import dev.hpm.accecurity.core.database.entity.MovementEntity
 import dev.hpm.accecurity.core.database.entity.PassEntity
 import dev.hpm.accecurity.core.model.ActividadData
 import dev.hpm.accecurity.core.model.displayVisitWindow
+import dev.hpm.accecurity.core.model.ScannedPass
 import dev.hpm.accecurity.core.model.PaseData
 import dev.hpm.accecurity.core.model.PersonaAdentroData
 import dev.hpm.accecurity.core.model.SolicitudData
@@ -34,6 +35,20 @@ fun PassEntity.toPaseData(): PaseData {
         estadoAcceso = status
     )
 }
+
+fun PassEntity.toScannedPass(): ScannedPass = ScannedPass(
+    id = id,
+    visitorName = visitorName,
+    description = description,
+    location = location,
+    requestedBy = requestedBy,
+    visitDate = visitDate,
+    startTime = startTime,
+    endTime = endTime,
+    status = status,
+    qrCode = qrCode,
+    entryTime = entryTime
+)
 
 fun PassEntity.toSolicitud(): SolicitudData = SolicitudData(
     id = id,
@@ -88,7 +103,9 @@ fun normalizeStatus(raw: String?): String {
         "LEFT", "SALIO", "SALIÓ" -> "LEFT"
         "PENDING", "PENDIENTE" -> "PENDING"
         "REJECTED", "RECHAZADO" -> "REJECTED"
-        else -> "EXPECTED"
+        "EXPECTED", "ESPERADO", "APPROVED", "APROBADO" -> "EXPECTED"
+        "EXPIRED", "VENCIDO", "EXPIRADO" -> "EXPIRED"
+        else -> "UNKNOWN"
     }
 }
 

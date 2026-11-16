@@ -41,12 +41,12 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import dev.hpm.accecurity.core.ui.components.escaner.ResultadoEscaneoDialog
 import dev.hpm.accecurity.core.ui.components.escaner.BadgeEnLinea
 import dev.hpm.accecurity.core.ui.components.escaner.MarcoEscanerOverlay
 import dev.hpm.accecurity.core.ui.components.escaner.VisorQrPlaceholder
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarGuardia
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Pantalla de escáner QR para el rol guardia de seguridad.
@@ -143,7 +143,6 @@ fun EscanerScreenGuardia(
         }
     }
 
-    val framesRestantesManual = remember { AtomicInteger(0) }
     val currentEstaEscaneando by rememberUpdatedState(state.estaEscaneando)
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
@@ -166,14 +165,7 @@ fun EscanerScreenGuardia(
                     .build()
 
                 imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
-                    val framesManual = framesRestantesManual.get()
-                    val esManual = framesManual > 0
-                    if (esManual) {
-                        framesRestantesManual.decrementAndGet()
-                    }
-
-                    // Si la lectura automática está pausada y no se solicitó escaneo manual, descartar frame
-                    if (!currentEstaEscaneando && !esManual) {
+                    if (!currentEstaEscaneando) {
                         imageProxy.close()
                         return@setAnalyzer
                     }
@@ -189,31 +181,18 @@ fun EscanerScreenGuardia(
                             .addOnSuccessListener { barcodes ->
                                 val qrValido = barcodes.firstOrNull { !it.rawValue.isNullOrBlank() }?.rawValue
                                 if (qrValido != null) {
-                                    framesRestantesManual.set(0)
                                     viewModel.onEvent(EscanerEvent.CodigoEscaneado(qrValido))
-                                } else if (esManual && framesRestantesManual.get() <= 0) {
-                                    // El escaneo manual forzado no detectó ningún QR en los frames evaluados
-                                    viewModel.onEvent(
-                                        EscanerEvent.ErrorOcurrido("No se detectó ningún código QR en el visor. Ajusta el enfoque o la distancia.")
-                                    )
                                 }
                             }
-                            .addOnFailureListener { e ->
-                                if (esManual && framesRestantesManual.get() <= 0) {
-                                    viewModel.onEvent(
-                                        EscanerEvent.ErrorOcurrido("Error al procesar el código: ${e.localizedMessage ?: "Fallo de lectura"}")
-                                    )
-                                }
+                            .addOnFailureListener {
+                                viewModel.onEvent(EscanerEvent.ErrorOcurrido(
+                                    "No se pudo leer el código. Tocá Escanear código QR para reintentar."
+                                ))
                             }
                             .addOnCompleteListener {
                                 imageProxy.close()
                             }
                     } else {
-                        if (esManual && framesRestantesManual.get() <= 0) {
-                            viewModel.onEvent(
-                                EscanerEvent.ErrorOcurrido("No se pudo obtener imagen del sensor de la cámara.")
-                            )
-                        }
                         imageProxy.close()
                     }
                 }
@@ -243,6 +222,18 @@ fun EscanerScreenGuardia(
         onDispose {
             cameraProvider?.unbindAll()
         }
+    }
+
+    if (state.mostrarResultado) {
+        ResultadoEscaneoDialog(
+            pase = state.paseValidado,
+            consultando = state.consultaEnCurso,
+            registrando = state.registroEnCurso,
+            mensaje = state.mensajeResultado,
+            entradaRegistrada = state.entradaRegistrada,
+            onConfirmar = { viewModel.onEvent(EscanerEvent.ConfirmarEntrada) },
+            onCerrar = { viewModel.onEvent(EscanerEvent.CerrarResultado) }
+        )
     }
 
     Scaffold(
@@ -351,6 +342,7 @@ fun EscanerScreenGuardia(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
+                    enabled = !state.consultaEnCurso && !state.registroEnCurso && !state.mostrarResultado,
                     onClick = {
                         if (!tienePermisoCamara) {
                             permisoLauncher.launch(Manifest.permission.CAMERA)
@@ -359,11 +351,7 @@ fun EscanerScreenGuardia(
                                 EscanerEvent.ErrorOcurrido("La cámara aún se está inicializando o no está disponible.")
                             )
                         } else {
-                            if (!state.estaEscaneando) {
-                                viewModel.onEvent(EscanerEvent.ReiniciarEscaner)
-                            }
-                            // Solicita forzar la lectura en los siguientes frames
-                            framesRestantesManual.set(5)
+                            viewModel.onEvent(EscanerEvent.ReiniciarEscaner)
                         }
                     },
                     modifier = Modifier
