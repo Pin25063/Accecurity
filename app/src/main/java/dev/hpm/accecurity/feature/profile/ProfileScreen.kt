@@ -209,14 +209,16 @@ private fun OpcionPerfilDialog(
                 when (opcion) {
                     OpcionPerfil.NOTIFICACIONES -> {
                         if (!state.mostrarNotificaciones) {
-                            Text(
-                                text = "Las notificaciones están ocultas. " +
-                                        "Puedes mostrarlas desde Preferencias."
-                            )
+                            Text(text = "Activá las notificaciones en Preferencias para verlas aquí.")
+                        } else if (state.cargandoNotificaciones) {
+                            Text(text = "Cargando notificaciones...")
+                        } else if (state.errorNotificaciones != null) {
+                            Text(text = state.errorNotificaciones, color = MaterialTheme.colorScheme.error)
                         } else if (state.notificaciones.isEmpty()) {
                             Text(text = "No hay notificaciones.")
                         } else {
-                            state.notificaciones.forEach { notificacion ->
+                            state.notificaciones.forEachIndexed { index, notificacion ->
+                                if (index > 0) HorizontalDivider()
                                 Text(text = notificacion)
                             }
                         }

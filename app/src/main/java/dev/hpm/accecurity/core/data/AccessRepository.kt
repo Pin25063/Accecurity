@@ -29,6 +29,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -56,6 +58,14 @@ class AccessRepository(
         }
     }
 
+    /** Cada pantalla de pases se crea dentro de la sesión autenticada actual. */
+    fun observeMyPasses(): Flow<List<PaseData>> {
+        val userId = auth.currentUser?.uid ?: return flowOf(emptyList())
+        return database.passDao().observeByCreator(userId).map { passes ->
+            passes.map { it.toPaseData() }
+        }
+    }
+
     fun observePending(): Flow<List<SolicitudData>> {
         return database.passDao().observePending().map { passes ->
             passes.map { it.toSolicitud() }
@@ -69,8 +79,20 @@ class AccessRepository(
     }
 
     fun observeMovements(): Flow<List<ActividadData>> {
-        return database.movementDao().observeAll().map { movements ->
-            movements.map { it.toActividad() }
+        return combine(database.movementDao().observeAll(), database.passDao().observeVisible()) { movements, passes ->
+            val passesById = passes.associateBy { it.id }
+            movements.sortedByDescending { movement ->
+                listOf("dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm").firstNotNullOfOrNull { format ->
+                    runCatching { LocalDateTime.parse(movement.time, DateTimeFormatter.ofPattern(format)) }.getOrNull()
+                } ?: LocalDateTime.MIN
+            }.map { movement ->
+                // Los registros anteriores guardaban el ID como descripción.
+                val description = if (movement.description.isBlank() || movement.description == movement.passId) {
+                    passesById[movement.passId]?.visitorName?.takeIf { it.isNotBlank() }
+                        ?.let { "Para $it" } ?: "Visitante no registrado"
+                } else movement.description
+                movement.copy(description = description).toActividad()
+            }
         }
     }
 
@@ -420,27 +442,50 @@ class AccessRepository(
     /**
      * El jefe autoriza (EXPECTED) o rechaza (REJECTED) una solicitud pendiente.
      */
-    suspend fun updatePassStatus(passId: String, status: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
+    suspend fun updatePassStatus(passId: String, status: String): Boolean = withContext(Dispatchers.IO) {
+        if (status != "EXPECTED" && status != "REJECTED") return@withContext false
+        if (!isSupportedPassCode(passId)) return@withContext false
+        val userId = auth.currentUser?.uid ?: return@withContext false
+        val passRef = firestore.collection("pases").document(passId)
+        val movementRef = firestore.collection("movimientos").document()
+        try {
+            val recorded = firestore.runTransaction { transaction ->
+                val user = transaction.get(firestore.collection("users").document(userId))
+                val role = ((user.get("role") as? String) ?: (user.get("rol") as? String))?.trim()?.lowercase()
+                if (role != "jefe") throw AccessDeniedException("Solo el jefe puede revisar solicitudes.")
+                val snapshot = transaction.get(passRef)
+                if (!snapshot.exists()) throw AccessDeniedException("La solicitud ya no existe.")
+                val pass = snapshot.toPassEntity()
+                if (pass.status != "PENDING") throw AccessDeniedException("La solicitud ya fue revisada.")
                 val approved = status == "EXPECTED"
-                firestore.collection("pases").document(passId).update("status", status).await()
-                firestore.collection("movimientos").document().set(
-                    mapOf(
-                        "passId" to passId,
-                        "title" to if (approved) "Solicitud aprobada" else "Solicitud rechazada",
-                        "description" to passId,
-                        "time" to "",
-                        "type" to if (approved) "PASS_CREATED" else "REJECTION"
-                    )
-                ).await()
-                refresh()
-                true
-            } catch (_: Exception) {
-                false
-            }
+                val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+                val movement = MovementEntity(
+                    id = movementRef.id,
+                    passId = pass.id,
+                    title = if (approved) "Solicitud aprobada" else "Solicitud rechazada",
+                    description = "Para ${pass.visitorName.ifBlank { "visitante no registrado" }}",
+                    time = time,
+                    type = if (approved) "PASS_CREATED" else "REJECTION"
+                )
+                transaction.update(passRef, "status", status)
+                transaction.set(movementRef, mapOf(
+                    "passId" to movement.passId,
+                    "title" to movement.title,
+                    "description" to movement.description,
+                    "time" to movement.time,
+                    "type" to movement.type
+                ))
+                RecordedAccess(pass.copy(status = status), movement)
+            }.await()
+            cacheRecordedAccess(recorded)
+            true
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            false
         }
     }
+
 }
 
 private fun com.google.firebase.firestore.DocumentSnapshot.string(primary: String, fallback: String): String {

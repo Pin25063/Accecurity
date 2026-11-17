@@ -10,8 +10,18 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PassDao {
-    @Query("SELECT * FROM passes WHERE status IN ('EXPECTED', 'INSIDE', 'LEFT')")
+    @Query("""
+        SELECT * FROM passes WHERE status IN ('PENDING', 'EXPECTED', 'INSIDE', 'LEFT', 'REJECTED', 'EXPIRED')
+        ORDER BY CASE status WHEN 'PENDING' THEN 0 WHEN 'EXPECTED' THEN 1 WHEN 'INSIDE' THEN 2 WHEN 'LEFT' THEN 3 WHEN 'REJECTED' THEN 4 ELSE 5 END, visitDate DESC, startTime DESC, visitorName COLLATE NOCASE, id
+    """)
     fun observeVisible(): Flow<List<PassEntity>>
+
+    @Query("""
+        SELECT * FROM passes WHERE createdById = :creatorId
+        AND status IN ('PENDING', 'EXPECTED', 'INSIDE', 'LEFT', 'REJECTED', 'EXPIRED')
+        ORDER BY CASE status WHEN 'PENDING' THEN 0 WHEN 'EXPECTED' THEN 1 WHEN 'INSIDE' THEN 2 WHEN 'LEFT' THEN 3 WHEN 'REJECTED' THEN 4 ELSE 5 END, visitDate DESC, startTime DESC, visitorName COLLATE NOCASE, id
+    """)
+    fun observeByCreator(creatorId: String): Flow<List<PassEntity>>
 
     @Query("SELECT * FROM passes WHERE status = 'PENDING'")
     fun observePending(): Flow<List<PassEntity>>

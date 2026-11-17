@@ -95,9 +95,13 @@ private fun initialsOf(name: String): String {
 
 private fun statusColors(status: String): Triple<String, Color, Color> {
     return when (status) {
+        "PENDING" -> Triple("Pendiente", Color(0xFFE3EEFA), Color(0xFF305A87))
+        "EXPECTED" -> Triple("Esperado", StatusExpectedContainer, StatusExpected)
         "INSIDE" -> Triple("Dentro", StatusInsideContainer, StatusInside)
         "LEFT" -> Triple("Salió", Color(0xFFEFEFEF), Color(0xFF6B7280))
-        else -> Triple("Esperado", StatusExpectedContainer, StatusExpected)
+        "REJECTED" -> Triple("Rechazado", Color(0xFFFCE4E4), Color(0xFFB3261E))
+        "EXPIRED" -> Triple("Vencido", Color(0xFFF1E8F5), Color(0xFF745080))
+        else -> Triple("Desconocido", Color(0xFFEFEFEF), Color(0xFF6B7280))
     }
 }
 

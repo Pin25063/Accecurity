@@ -178,75 +178,63 @@ fun PaseItem(
     onClick: () -> Unit = {}
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
+            .clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
-                .size(48.dp)
+            modifier = Modifier.size(40.dp)
                 .background(MaterialTheme.colorScheme.background, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = pase.iniciales,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text(pase.iniciales, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
-
         Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = pase.nombre,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = pase.nombre,
+                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier.background(pase.colorEstado, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.size(6.dp).background(pase.colorPunto, CircleShape))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(pase.estado, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1F2937))
+                }
+            }
             Text(
                 text = pase.descripcion,
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-        }
-
-        Column(horizontalAlignment = Alignment.End) {
-            Row(
-                modifier = Modifier
-                    .background(pase.colorEstado, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(pase.colorPunto, CircleShape)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = pase.estado,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            if (pase.ubicacion.isNotBlank()) {
+                Text(pase.ubicacion, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = pase.hora,
+                    text = when (pase.estadoAcceso) {
+                        "INSIDE" -> "Entrada: ${pase.hora}"
+                        "LEFT" -> "Salida: ${pase.hora}"
+                        else -> pase.horarioAutorizado.ifBlank { pase.hora }
+                    },
+                    modifier = Modifier.weight(1f),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "Ver detalles",

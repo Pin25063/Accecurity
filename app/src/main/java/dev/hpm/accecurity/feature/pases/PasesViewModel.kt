@@ -22,6 +22,17 @@ class PasesViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
+            AppGraph.repository.observeMyPasses().collect { pases ->
+                _uiState.update { state ->
+                    state.copy(
+                        misPases = pases,
+                        misPasesFiltrados = filtrarPases(pases, state.filtroSeleccionado),
+                        cargandoMisPases = false
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
             AppGraph.repository.observePasses().collect { pases ->
                 _uiState.update { state ->
                     state.copy(
@@ -47,10 +58,8 @@ class PasesViewModel : ViewModel() {
                 _uiState.update { state ->
                     state.copy(
                         filtroSeleccionado = event.filtro,
-                        pasesFiltrados = filtrarPases(
-                            pases = state.pases,
-                            filtro = event.filtro
-                        )
+                        pasesFiltrados = filtrarPases(state.pases, event.filtro),
+                        misPasesFiltrados = filtrarPases(state.misPases, event.filtro)
                     )
                 }
             }
@@ -212,9 +221,11 @@ class PasesViewModel : ViewModel() {
         filtro: String
     ): List<PaseData> {
         return when (filtro) {
-            "Esperados" -> pases.filter { it.estado == "Esperado" }
-            "Adentro" -> pases.filter { it.estado == "Dentro" }
-            "Salieron" -> pases.filter { it.estado == "Salió" }
+            "Pendientes" -> pases.filter { it.estadoAcceso == "PENDING" }
+            "Esperados" -> pases.filter { it.estadoAcceso == "EXPECTED" }
+            "Adentro" -> pases.filter { it.estadoAcceso == "INSIDE" }
+            "Salieron" -> pases.filter { it.estadoAcceso == "LEFT" }
+            "Rechazados" -> pases.filter { it.estadoAcceso == "REJECTED" }
             else -> pases
         }
     }

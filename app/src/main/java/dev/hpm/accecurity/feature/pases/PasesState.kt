@@ -8,6 +8,9 @@ import dev.hpm.accecurity.core.model.PaseData
 data class PasesState(
     val pases: List<PaseData> = emptyList(),
     val pasesFiltrados: List<PaseData> = emptyList(),
+    val misPases: List<PaseData> = emptyList(),
+    val misPasesFiltrados: List<PaseData> = emptyList(),
+    val cargandoMisPases: Boolean = true,
     val filtroSeleccionado: String = "Todos",
     val totalEsperados: Int = 0,
     val totalAdentro: Int = 0,

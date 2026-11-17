@@ -54,25 +54,19 @@ fun ActividadItem(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            Text(text = titulo, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface)
+            Text(text = descripcion, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                text = titulo,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Text(
-                text = descripcion,
-                fontSize = 12.sp,
+                text = when {
+                    hora.isBlank() -> "Sin fecha ni hora"
+                    Regex("([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?").matches(hora.trim()) -> "${hora.trim()} (sin fecha)"
+                    else -> hora
+                },
+                fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
-        Text(
-            text = hora,
-            modifier = Modifier.padding(top = 2.dp),
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

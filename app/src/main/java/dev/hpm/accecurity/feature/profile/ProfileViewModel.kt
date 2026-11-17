@@ -1,9 +1,19 @@
 package dev.hpm.accecurity.feature.profile
 
+import androidx.lifecycle.viewModelScope
+import dev.hpm.accecurity.core.data.AppGraph
+import dev.hpm.accecurity.core.data.avisosDeMisPases
+import dev.hpm.accecurity.core.data.avisosDeSolicitudes
+import dev.hpm.accecurity.core.data.avisosDeGarita
+import dev.hpm.accecurity.core.model.TipoUsuario
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import dev.hpm.accecurity.core.auth.AuthRepository
 import dev.hpm.accecurity.core.data.obtenerAyudaPerfil
-import dev.hpm.accecurity.core.data.obtenerNotificacionesFalsas
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,11 +27,13 @@ class ProfileViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(
         ProfileState(
-            notificaciones = obtenerNotificacionesFalsas(),
             ayuda = obtenerAyudaPerfil()
         )
     )
     val uiState: StateFlow<ProfileState> = _uiState.asStateFlow()
+
+    private var notificacionesJob: Job? = null
+    private var rolObservado: TipoUsuario? = null
 
     fun onEvent(event: ProfileEvent) {
         when (event) {
@@ -34,6 +46,7 @@ class ProfileViewModel(
                         numeroSolicitudesJefe = event.numeroSolicitudesJefe
                     )
                 }
+                observarNotificaciones(event.tipoUsuario)
             }
 
             is ProfileEvent.SeleccionarOpcion -> {
@@ -55,6 +68,32 @@ class ProfileViewModel(
             }
 
             ProfileEvent.CerrarSesion -> cerrarSesion()
+        }
+    }
+
+    private fun observarNotificaciones(rol: TipoUsuario) {
+        if (rolObservado == rol && notificacionesJob?.isActive == true) return
+        rolObservado = rol
+        notificacionesJob?.cancel()
+        _uiState.update {
+            it.copy(notificaciones = emptyList(), cargandoNotificaciones = true, errorNotificaciones = null)
+        }
+        val avisos = when (rol) {
+            TipoUsuario.ADMIN, TipoUsuario.RESIDENTE -> AppGraph.repository.observeMyPasses().map(::avisosDeMisPases)
+            TipoUsuario.JEFE -> AppGraph.repository.observePending().map(::avisosDeSolicitudes)
+            TipoUsuario.GUARDIA -> AppGraph.repository.observeMovements().map(::avisosDeGarita)
+        }
+        notificacionesJob = viewModelScope.launch {
+            avisos.catch { error ->
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(cargandoNotificaciones = false, errorNotificaciones = "No se pudieron cargar las notificaciones.")
+                }
+            }.collect { notificaciones ->
+                _uiState.update {
+                    it.copy(notificaciones = notificaciones, cargandoNotificaciones = false, errorNotificaciones = null)
+                }
+            }
         }
     }
 

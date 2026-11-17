@@ -35,7 +35,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun PaseQrSection(pase: PaseData) {
     if (pase.estadoAcceso != "EXPECTED") {
-        Text("El QR de ingreso está disponible únicamente para pases aprobados y esperados.")
+        Text(when (pase.estadoAcceso) {
+            "PENDING" -> "Tu solicitud está pendiente de aprobación. El QR estará disponible cuando sea aprobada."
+            "REJECTED" -> "La solicitud fue rechazada. Este pase no permite el ingreso."
+            "INSIDE" -> "El visitante ya ingresó. El QR no permite registrar otra entrada."
+            "LEFT" -> "La visita finalizó. Este pase no permite reingresar."
+            "EXPIRED" -> "El pase está vencido. Creá una nueva solicitud si necesitás otra visita."
+            else -> "El QR no está disponible para este estado del pase."
+        })
         return
     }
     if (pase.codigoQr.isBlank()) {

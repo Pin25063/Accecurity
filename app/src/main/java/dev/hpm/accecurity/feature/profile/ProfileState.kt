@@ -21,6 +21,8 @@ data class ProfileState(
     val numeroSolicitudesJefe: Int = 0,
     val opcionSeleccionada: OpcionPerfil? = null,
     val notificaciones: List<String> = emptyList(),
+    val cargandoNotificaciones: Boolean = false,
+    val errorNotificaciones: String? = null,
     val mostrarNotificaciones: Boolean = true,
     val ayuda: String = "",
     val sesionCerrada: Boolean = false,

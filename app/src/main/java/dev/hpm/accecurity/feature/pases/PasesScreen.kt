@@ -74,7 +74,7 @@ fun PasesScreenAdminYResidente(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "Invitaciones activas y recientes",
+                        text = "Tus solicitudes y pases de visita",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -101,13 +101,30 @@ fun PasesScreenAdminYResidente(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            items(state.pases) { pase ->
-                PaseItem(
-                    pase = pase,
-                    onClick = {
-                        viewModel.onEvent(PasesEvent.VerDetalle(pase))
-                    }
+            item {
+                FiltrosPases(
+                    seleccionado = state.filtroSeleccionado,
+                    onSeleccionar = { viewModel.onEvent(PasesEvent.CambiarFiltro(it)) }
                 )
+            }
+            when {
+                state.cargandoMisPases -> item {
+                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                }
+                state.misPasesFiltrados.isEmpty() -> item {
+                    Text(
+                        text = if (state.misPases.isEmpty()) "Todavía no creaste solicitudes de visita."
+                        else "No tenés pases en este estado.",
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                else -> items(state.misPasesFiltrados, key = { it.id }) { pase ->
+                    PaseItem(
+                        pase = pase,
+                        onClick = { viewModel.onEvent(PasesEvent.VerDetalle(pase)) }
+                    )
+                }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -225,49 +242,10 @@ fun HomeScreenAdmin(
                         )
                     }
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FiltroChip(
-                            texto = "Todos",
-                            seleccionado = state.filtroSeleccionado == "Todos",
-                            onClick = {
-                                viewModel.onEvent(
-                                    PasesEvent.CambiarFiltro("Todos")
-                                )
-                            }
-                        )
-                        FiltroChip(
-                            texto = "Esperados",
-                            seleccionado = state.filtroSeleccionado == "Esperados",
-                            onClick = {
-                                viewModel.onEvent(
-                                    PasesEvent.CambiarFiltro("Esperados")
-                                )
-                            }
-                        )
-                        FiltroChip(
-                            texto = "Adentro",
-                            seleccionado = state.filtroSeleccionado == "Adentro",
-                            onClick = {
-                                viewModel.onEvent(
-                                    PasesEvent.CambiarFiltro("Adentro")
-                                )
-                            }
-                        )
-                        FiltroChip(
-                            texto = "Salieron",
-                            seleccionado = state.filtroSeleccionado == "Salieron",
-                            onClick = {
-                                viewModel.onEvent(
-                                    PasesEvent.CambiarFiltro("Salieron")
-                                )
-                            }
-                        )
-                    }
+                    FiltrosPases(
+                        seleccionado = state.filtroSeleccionado,
+                        onSeleccionar = { viewModel.onEvent(PasesEvent.CambiarFiltro(it)) }
+                    )
                 }
             }
 
@@ -283,7 +261,7 @@ fun HomeScreenAdmin(
                 }
             }
 
-            items(state.pasesFiltrados) { pase ->
+            items(state.pasesFiltrados, key = { it.id }) { pase ->
                 PaseItem(
                     pase = pase,
                     onClick = {
@@ -293,6 +271,23 @@ fun HomeScreenAdmin(
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
+    }
+}
+
+/** Los mismos estados se pueden consultar desde Inicio y Mis pases. */
+@Composable
+private fun FiltrosPases(seleccionado: String, onSeleccionar: (String) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        listOf("Todos", "Pendientes", "Esperados", "Adentro", "Salieron", "Rechazados").forEach { filtro ->
+            FiltroChip(
+                texto = filtro,
+                seleccionado = seleccionado == filtro,
+                onClick = { onSeleccionar(filtro) }
+            )
         }
     }
 }
@@ -441,7 +436,7 @@ private fun SelectorHoraIngreso(
             SelectorNumeroHorario(
                 etiqueta = "Hora (24 h)",
                 valor = hora,
-                opciones = listOf(7,8,9,10,11,12,13,14,15,16,17,18),
+                opciones = (0..23).toList(),
                 habilitado = habilitado,
                 modifier = Modifier.weight(1f),
                 onSeleccionar = {

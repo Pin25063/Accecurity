@@ -59,7 +59,7 @@ fun RegistroGaritaScreen(
                 )
 
                 Text(
-                    text = "Hoy",
+                    text = "Historial de movimientos",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
