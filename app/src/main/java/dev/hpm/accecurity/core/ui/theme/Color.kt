@@ -49,6 +49,6 @@ val StatusExpected = Color(0xFFD69E2E)
 val StatusInsideContainer = Color(0xFFA5E6AC)
 val StatusInside = Color(0xFF38A169)
 
-// COLORES TEMA OSCURO (Opcional a futuro)
+// COLORES TEMA OSCURO
 val PrimaryDark = Color(0xFF8FB3E0)
 val SecondaryDark = Color(0xFFBCCCDC)
