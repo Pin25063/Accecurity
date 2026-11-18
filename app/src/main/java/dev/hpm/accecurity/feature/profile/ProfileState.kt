@@ -15,8 +15,8 @@ enum class OpcionPerfil {
  * Estado inmutable de la pantalla de Perfil.
  */
 data class ProfileState(
-    val nombre: String = "Carlos Mendoza",
-    val iniciales: String = "CM",
+    val nombre: String = "",
+    val iniciales: String = "",
     val tipoUsuario: TipoUsuario = TipoUsuario.ADMIN,
     val numeroSolicitudesJefe: Int = 0,
     val opcionSeleccionada: OpcionPerfil? = null,

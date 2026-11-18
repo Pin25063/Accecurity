@@ -36,8 +36,8 @@ import androidx.compose.runtime.LaunchedEffect
  */
 @Composable
 fun PerfilScreen(
-    nombre: String = "Carlos Mendoza",
-    iniciales: String = "CM",
+    nombre: String = "",
+    iniciales: String = "",
     tipoUsuario: TipoUsuario = TipoUsuario.ADMIN,
     numeroSolicitudesJefe: Int = 0,
     onInicioClick: () -> Unit = {},

@@ -1,13 +1,23 @@
 package dev.hpm.accecurity.appnavhost
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import dev.hpm.accecurity.core.auth.parseAssignedRole
+import dev.hpm.accecurity.core.auth.resolveUserDisplay
+import dev.hpm.accecurity.core.data.AppGraph
 import dev.hpm.accecurity.core.model.TipoUsuario
 import dev.hpm.accecurity.feature.activity.ActivityScreen
 import dev.hpm.accecurity.feature.inside.ActualmenteAdentroScreen
@@ -75,6 +85,23 @@ private fun NavHostController.navigateToLoginAfterSignOut() {
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    val firebaseAuth = remember { FirebaseAuth.getInstance() }
+    val currentUserEntity by remember { AppGraph.repository.observeCurrentUser() }
+        .collectAsStateWithLifecycle(initialValue = null)
+    val pendingRequests by remember { AppGraph.repository.observePending() }
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val numeroSolicitudesJefe = pendingRequests.size
+
+    var adminTipoUsuario by rememberSaveable { mutableStateOf(TipoUsuario.ADMIN) }
+    val tipoUsuarioAdminActual = parseAssignedRole(currentUserEntity?.role)
+        ?.takeIf { it == TipoUsuario.ADMIN || it == TipoUsuario.RESIDENTE }
+        ?: adminTipoUsuario
+
+    val firebaseUser = firebaseAuth.currentUser
+    val userDisplay = resolveUserDisplay(
+        displayName = firebaseUser?.displayName,
+        email = currentUserEntity?.email?.takeIf { it.isNotBlank() } ?: firebaseUser?.email
+    )
 
     NavHost(
         navController = navController,
@@ -86,6 +113,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 onLoginSuccess = { session ->
                     when (session.tipoUsuario) {
                         TipoUsuario.ADMIN, TipoUsuario.RESIDENTE -> {
+                            adminTipoUsuario = session.tipoUsuario
                             navController.navigate(AdminGraph) {
                                 popUpTo<LoginDestination> { inclusive = true }
                             }
@@ -108,6 +136,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
         navigation<AdminGraph>(startDestination = AdminInicioDestination) {
             composable<AdminInicioDestination> {
                 HomeScreenAdmin(
+                    nombreUsuario = userDisplay.firstName,
                     onInicioClick = {
                         navController.navigate(AdminInicioDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -190,7 +219,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
 
             composable<AdminActividadDestination> {
                 ActivityScreen(
-                    tipoUsuario = TipoUsuario.ADMIN,
+                    tipoUsuario = tipoUsuarioAdminActual,
                     onInicioClick = {
                         navController.navigate(AdminInicioDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -232,7 +261,9 @@ fun AppNavHost(modifier: Modifier = Modifier) {
 
             composable<AdminPerfilDestination> {
                 PerfilScreen(
-                    tipoUsuario = TipoUsuario.ADMIN,
+                    nombre = userDisplay.fullName,
+                    iniciales = userDisplay.initials,
+                    tipoUsuario = tipoUsuarioAdminActual,
                     onInicioClick = {
                         navController.navigate(AdminInicioDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -318,6 +349,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
 
             composable<JefeAdentroDestination> {
                 ActualmenteAdentroScreen(
+                    numeroSolicitudesJefe = numeroSolicitudesJefe,
                     onSolicitudesClick = {
                         navController.navigate(JefeSolicitudesDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -360,6 +392,7 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             composable<JefeActividadDestination> {
                 ActivityScreen(
                     tipoUsuario = TipoUsuario.JEFE,
+                    numeroSolicitudesJefe = numeroSolicitudesJefe,
                     onSolicitudesClick = {
                         navController.navigate(JefeSolicitudesDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -401,7 +434,10 @@ fun AppNavHost(modifier: Modifier = Modifier) {
 
             composable<JefePerfilDestination> {
                 PerfilScreen(
+                    nombre = userDisplay.fullName,
+                    iniciales = userDisplay.initials,
                     tipoUsuario = TipoUsuario.JEFE,
+                    numeroSolicitudesJefe = numeroSolicitudesJefe,
                     onSolicitudesClick = {
                         navController.navigate(JefeSolicitudesDestination) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -508,6 +544,8 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             }
             composable<GuardiaPerfilDestination> {
                 PerfilScreen(
+                    nombre = userDisplay.fullName,
+                    iniciales = userDisplay.initials,
                     tipoUsuario = TipoUsuario.GUARDIA,
                     onEscanerClick = {
                         navController.navigate(GuardiaEscanerDestination) {

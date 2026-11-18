@@ -28,8 +28,13 @@ import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -96,6 +101,18 @@ class AccessRepository(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeCurrentUser(): Flow<UserEntity?> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            trySend(firebaseAuth.currentUser?.uid)
+        }
+        auth.addAuthStateListener(listener)
+        trySend(auth.currentUser?.uid)
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }.distinctUntilChanged().flatMapLatest { uid ->
+        if (uid.isNullOrBlank()) flowOf(null) else database.userDao().observeById(uid)
+    }
+
     suspend fun saveSession(session: AuthenticatedSession) = withContext(Dispatchers.IO) {
         database.userDao().upsert(
             UserEntity(
@@ -104,6 +121,20 @@ class AccessRepository(
                 role = session.tipoUsuario.name
             )
         )
+    }
+
+    /**
+     * Vacía las tablas locales de Room al cerrar sesión para evitar datos residuales.
+     */
+    suspend fun clearLocalCache() = withContext(Dispatchers.IO) {
+        stopPassListener()
+        syncMutex.withLock {
+            database.withTransaction {
+                database.userDao().clear()
+                database.passDao().clear()
+                database.movementDao().clear()
+            }
+        }
     }
 
     /**

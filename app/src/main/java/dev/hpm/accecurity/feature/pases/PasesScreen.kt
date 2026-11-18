@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.hpm.accecurity.core.data.avisosDeMisPases
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarAdminYResidente
 import dev.hpm.accecurity.core.ui.components.pass.*
 import dev.hpm.accecurity.core.ui.components.topbar.TopBarInicioAdminYResidente
@@ -137,13 +138,18 @@ fun PasesScreenAdminYResidente(
  */
 @Composable
 fun HomeScreenAdmin(
+    nombreUsuario: String = "",
     onInicioClick: () -> Unit = {},
     onPasesClick: () -> Unit = {},
     onActividadClick: () -> Unit = {},
     onPerfilClick: () -> Unit = {},
+    onNotificacionesClick: () -> Unit = onPerfilClick,
     viewModel: PasesViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val tieneNotificaciones = remember(state.misPases) {
+        avisosDeMisPases(state.misPases).isNotEmpty()
+    }
 
     state.paseSeleccionado?.let { pase ->
         DetallePaseDialog(
@@ -163,7 +169,13 @@ fun HomeScreenAdmin(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { TopBarInicioAdminYResidente() },
+        topBar = {
+            TopBarInicioAdminYResidente(
+                nombreUsuario = nombreUsuario,
+                tieneNotificaciones = tieneNotificaciones,
+                onNotificacionesClick = onNotificacionesClick
+            )
+        },
         bottomBar = {
             BottomNavigationBarAdminYResidente(
                 inicio = true,

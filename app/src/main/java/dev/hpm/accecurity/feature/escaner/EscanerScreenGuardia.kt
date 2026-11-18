@@ -2,7 +2,6 @@ package dev.hpm.accecurity.feature.escaner
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -97,10 +96,9 @@ fun EscanerScreenGuardia(
         }
     }
 
-    // Manejo de mensajes de error y éxito mediante Snackbar y Toast
+    // Manejo de mensajes de error y éxito mediante Snackbar
     LaunchedEffect(state.mensajeError) {
         state.mensajeError?.let { error ->
-            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
             snackbarHostState.showSnackbar(
                 message = error,
                 duration = SnackbarDuration.Short
@@ -111,7 +109,6 @@ fun EscanerScreenGuardia(
 
     LaunchedEffect(state.mensajeExito) {
         state.mensajeExito?.let { exito ->
-            Toast.makeText(context, exito, Toast.LENGTH_SHORT).show()
             snackbarHostState.showSnackbar(
                 message = exito,
                 duration = SnackbarDuration.Short

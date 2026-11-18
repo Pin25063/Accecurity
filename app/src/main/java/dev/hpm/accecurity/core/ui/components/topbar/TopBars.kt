@@ -19,7 +19,12 @@ import androidx.compose.ui.unit.sp
  * Barra superior compartida por las pantallas de inicio de admin y residente.
  */
 @Composable
-fun TopBarInicioAdminYResidente() {
+fun TopBarInicioAdminYResidente(
+    nombreUsuario: String = "",
+    tieneNotificaciones: Boolean = false,
+    onNotificacionesClick: () -> Unit = {}
+) {
+    val primerNombre = nombreUsuario.trim().substringBefore(" ")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -29,7 +34,7 @@ fun TopBarInicioAdminYResidente() {
     ) {
         Column {
             Text(
-                text = "Buenos días, Sofía",
+                text = if (primerNombre.isNotBlank()) "Buenos días, $primerNombre" else "Buenos días",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -42,7 +47,7 @@ fun TopBarInicioAdminYResidente() {
         }
 
         Box(contentAlignment = Alignment.TopEnd) {
-            IconButton(onClick = { }) {
+            IconButton(onClick = onNotificacionesClick) {
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
                     contentDescription = "Notificaciones",
@@ -50,13 +55,15 @@ fun TopBarInicioAdminYResidente() {
                     modifier = Modifier.size(28.dp)
                 )
             }
-            Box(
-                modifier = Modifier
-                    .padding(6.dp)
-                    .size(8.dp)
-                    .background(Color.Red, CircleShape)
-                    .border(1.dp, MaterialTheme.colorScheme.background, CircleShape)
-            )
+            if (tieneNotificaciones) {
+                Box(
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .size(8.dp)
+                        .background(Color.Red, CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.background, CircleShape)
+                )
+            }
         }
     }
 }
