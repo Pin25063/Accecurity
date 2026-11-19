@@ -1,9 +1,11 @@
 package dev.hpm.accecurity.feature.escaner
 
+import dev.hpm.accecurity.core.model.AccessSyncStatus
 import dev.hpm.accecurity.core.model.PersonaAdentroData
 import dev.hpm.accecurity.core.model.ScannedPass
 
 data class EscanerState(
+    val sincronizacion: AccessSyncStatus = AccessSyncStatus(),
     val estaEscaneando: Boolean = true,
     val ultimoCodigoEscaneado: String? = null,
     val mensajeError: String? = null,

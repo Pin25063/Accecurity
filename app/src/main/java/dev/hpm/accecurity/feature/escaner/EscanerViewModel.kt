@@ -21,6 +21,11 @@ class EscanerViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
+            AppGraph.repository.observeSyncStatus().collect { estado ->
+                _uiState.update { it.copy(sincronizacion = estado) }
+            }
+        }
+        viewModelScope.launch {
             AppGraph.repository.observeInside().collect { personas ->
                 _uiState.update { it.copy(personasAdentro = personas.sortedBy { persona -> persona.nombre.lowercase() }) }
             }
@@ -29,6 +34,8 @@ class EscanerViewModel : ViewModel() {
 
     fun onEvent(event: EscanerEvent) {
         when (event) {
+            EscanerEvent.SincronizarPendientes -> AppGraph.repository.requestSync()
+            EscanerEvent.ReintentarConflictos -> AppGraph.repository.retrySyncConflicts()
             is EscanerEvent.CodigoEscaneado -> consultarPase(event.codigo)
             EscanerEvent.AbrirRegistroSalida -> abrirSalidas()
             EscanerEvent.ActualizarListaSalida -> cargarSalidas()
@@ -56,7 +63,7 @@ class EscanerViewModel : ViewModel() {
                 if (_uiState.value.registroEnCurso || _uiState.value.mostrarSalida) return
                 operationJob?.cancel()
                 _uiState.update {
-                    EscanerState(tienePermisoCamara = it.tienePermisoCamara, personasAdentro = it.personasAdentro)
+                    EscanerState(tienePermisoCamara = it.tienePermisoCamara, personasAdentro = it.personasAdentro, sincronizacion = it.sincronizacion)
                 }
             }
             is EscanerEvent.ErrorOcurrido -> {
@@ -119,7 +126,7 @@ class EscanerViewModel : ViewModel() {
                     it.copy(
                         registroEnCurso = false,
                         entradaRegistrada = true,
-                        mensajeResultado = "Entrada de ${result.visitorName} registrada el ${result.time}."
+                        mensajeResultado = "Entrada de ${result.visitorName} guardada el ${result.time}."
                     )
                 }
                 is RegisterEntryResult.Failure -> _uiState.update {
@@ -188,7 +195,7 @@ class EscanerViewModel : ViewModel() {
                     it.copy(
                         registrandoSalida = false,
                         salidaRegistrada = true,
-                        mensajeSalida = "Salida de ${result.visitorName} registrada el ${result.time}."
+                        mensajeSalida = "Salida de ${result.visitorName} guardada el ${result.time}."
                     )
                 }
                 is RegisterExitResult.Failure -> _uiState.update {

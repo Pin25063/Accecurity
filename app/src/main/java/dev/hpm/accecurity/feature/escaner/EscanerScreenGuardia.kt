@@ -42,7 +42,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import dev.hpm.accecurity.core.ui.components.escaner.RegistroSalidaDialog
 import dev.hpm.accecurity.core.ui.components.escaner.ResultadoEscaneoDialog
-import dev.hpm.accecurity.core.ui.components.escaner.BadgeEnLinea
+import dev.hpm.accecurity.core.ui.components.escaner.AccessSyncPanel
 import dev.hpm.accecurity.core.ui.components.escaner.MarcoEscanerOverlay
 import dev.hpm.accecurity.core.ui.components.escaner.VisorQrPlaceholder
 import dev.hpm.accecurity.core.ui.components.navigation.BottomNavigationBarGuardia
@@ -276,7 +276,12 @@ fun EscanerScreenGuardia(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                BadgeEnLinea()
+                Text(
+                    text = if (state.sincronizacion.online) "En línea" else "Sin conexión",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (state.sincronizacion.online) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         bottomBar = {
@@ -357,6 +362,11 @@ fun EscanerScreenGuardia(
                     .padding(horizontal = 16.dp, vertical = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                AccessSyncPanel(
+                    status = state.sincronizacion,
+                    onSync = { viewModel.onEvent(EscanerEvent.SincronizarPendientes) },
+                    onRetryConflicts = { viewModel.onEvent(EscanerEvent.ReintentarConflictos) }
+                )
                 Button(
                     enabled = !state.consultaEnCurso && !state.registroEnCurso && !state.mostrarResultado && !state.mostrarSalida,
                     onClick = {

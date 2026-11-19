@@ -7,6 +7,8 @@ import dev.hpm.accecurity.core.model.PersonaAdentroData
  */
 sealed interface EscanerEvent {
     data class CodigoEscaneado(val codigo: String) : EscanerEvent
+    data object SincronizarPendientes : EscanerEvent
+    data object ReintentarConflictos : EscanerEvent
     data object AbrirRegistroSalida : EscanerEvent
     data object ActualizarListaSalida : EscanerEvent
     data class CambiarBusquedaSalida(val texto: String) : EscanerEvent

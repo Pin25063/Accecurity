@@ -24,6 +24,18 @@ class LoginViewModel(
     private val _uiState = MutableStateFlow(LoginState())
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            val session = AppGraph.repository.restoreGuardSession() ?: return@launch
+            withContext(Dispatchers.Main) {
+                val state = _uiState.value
+                if (!state.isLoading && state.email.isBlank() && state.password.isBlank() && state.session == null) {
+                    _uiState.update { it.copy(session = session) }
+                }
+            }
+        }
+    }
+
     fun onEvent(event: LoginEvent) {
         when (event) {
             is LoginEvent.EmailChanged -> {
